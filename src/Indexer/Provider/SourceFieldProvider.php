@@ -88,6 +88,7 @@ class SourceFieldProvider implements ProviderInterface
                 /** @var FieldConfigId $fieldConfigId */
                 $fieldConfigId = $fieldConfig?->getId();
                 $fieldType = $this->getGallyType(
+                    $metadata,
                     $fieldData['name'],
                     $fieldConfigId ? $fieldConfigId->getFieldType() : $fieldData['type']
                 );
@@ -131,14 +132,27 @@ class SourceFieldProvider implements ProviderInterface
         return $this->attributeMapping[$fieldName] ?? $fieldName;
     }
 
-    private function getGallyType(string $fieldName, string $fieldType): string
+    private function getGallyType(Metadata $metadata, string $fieldName, string $fieldType): string
     {
-        return match (true) {
+        $type = match (true) {
             'brand' === $fieldName => SourceField::TYPE_SELECT,
             str_ends_with($fieldName, '_enum') => SourceField::TYPE_SELECT,
             str_starts_with($fieldName, 'image_') => SourceField::TYPE_IMAGE,
             default => $this->typeMapping[$fieldType] ?? SourceField::TYPE_TEXT,
         };
+
+        if ('product' === $metadata->getEntity()) {
+            $type = match ($fieldName) {
+                'inv_qty' => 'decimal',
+                'category_paths',
+                'category_paths.CATEGORY_PATH',
+                'visible_for_customer',
+                'hidden_for_customer' => 'text',
+                default => $type,
+            };
+        }
+
+        return $type;
     }
 
     private function getDefaultLocale(): string

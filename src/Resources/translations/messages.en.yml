@@ -1,0 +1,17 @@
+gally:
+    configuration:
+        group:
+            label: "Gally Configuration"
+        field:
+            enabled:
+                label: "Enable Gally"
+                tooltip: "Enable or disable integration with Gally."
+            url:
+                label: "Gally URL"
+                tooltip: "URL to connect to the Gally service."
+            email:
+                label: "Email"
+                tooltip: "Email used to connect to Gally."
+            password:
+                label: "Password"
+                tooltip: "Password used to connect to Gally."

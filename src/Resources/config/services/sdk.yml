@@ -3,7 +3,7 @@ services:
         factory: ['\Gally\OroPlugin\Factory\ConfigurationFactory', 'create']
         lazy: true
         arguments:
-            - '@oro_website_search.engine.parameters'
+            - '@Gally\OroPlugin\Config\ConfigManager'
 
     Gally\Sdk\Service\StructureSynchonizer:
         arguments:

@@ -14,20 +14,17 @@ declare(strict_types=1);
 
 namespace Gally\OroPlugin\Factory;
 
+use Gally\OroPlugin\Config\ConfigManager;
 use Gally\Sdk\Client\Configuration;
-use Oro\Bundle\SearchBundle\Engine\EngineParameters;
 
 class ConfigurationFactory
 {
-    public static function create(EngineParameters $engineParameters): Configuration
+    public static function create(ConfigManager $configManager): Configuration
     {
-        $scheme = '443' === $engineParameters->getPort() ? 'https' : 'http';
-        $url = "$scheme://{$engineParameters->getHost()}:{$engineParameters->getPort()}";
-
         return new Configuration(
-            $url,
-            stripslashes($engineParameters->getUser()),
-            stripslashes($engineParameters->getPassword()),
+            $configManager->getGallyUrl(),
+            $configManager->getGallyEmail(),
+            $configManager->getGallyPassword(),
         );
     }
 }

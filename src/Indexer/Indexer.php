@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Gally\OroPlugin\Indexer;
 
+use Gally\OroPlugin\Config\ConfigManager;
 use Gally\OroPlugin\Indexer\Provider\CatalogProvider;
 use Gally\OroPlugin\Indexer\Provider\SourceFieldProvider;
 use Gally\Sdk\Entity\Index;
@@ -21,11 +22,13 @@ use Gally\Sdk\Entity\LocalizedCatalog;
 use Gally\Sdk\Service\IndexOperation;
 use Oro\Bundle\EntityBundle\ORM\DoctrineHelper;
 use Oro\Bundle\LocaleBundle\Entity\Localization;
+use Oro\Bundle\SearchBundle\Engine\IndexerInterface;
 use Oro\Bundle\SearchBundle\Provider\SearchMappingProvider;
 use Oro\Bundle\WebsiteBundle\Provider\AbstractWebsiteLocalizationProvider;
 use Oro\Bundle\WebsiteSearchBundle\Engine\AbstractIndexer;
 use Oro\Bundle\WebsiteSearchBundle\Engine\IndexDataProvider;
 use Oro\Bundle\WebsiteSearchBundle\Engine\IndexerInputValidator;
+use Oro\Bundle\WebsiteSearchBundle\Event\BeforeReindexEvent;
 use Oro\Bundle\WebsiteSearchBundle\Placeholder\PlaceholderInterface;
 use Oro\Bundle\WebsiteSearchBundle\Resolver\EntityDependenciesResolverInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -40,6 +43,8 @@ class Indexer extends AbstractIndexer
     /** @var Index[] */
     private array $indicesByLocale;
 
+    private IndexerInterface $fallBackIndexer;
+
     public function __construct(
         DoctrineHelper $doctrineHelper,
         SearchMappingProvider $mappingProvider,
@@ -53,6 +58,7 @@ class Indexer extends AbstractIndexer
         private CatalogProvider $catalogProvider,
         private SourceFieldProvider $sourceFieldProvider,
         private IndexOperation $indexOperation,
+        private ConfigManager $configManager,
     ) {
         parent::__construct(
             $doctrineHelper,
@@ -64,6 +70,57 @@ class Indexer extends AbstractIndexer
             $eventDispatcher,
             $regexPlaceholder
         );
+    }
+
+    public function setFallBackIndexer(IndexerInterface $fallBackIndexer): void
+    {
+        $this->fallBackIndexer = $fallBackIndexer;
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @param array $context
+     *                       $context = [
+     *                       'entityIds' int[] Array of entities ids to reindex
+     *                       'websiteIds' int[] Array of websites ids to reindex
+     *                       'currentWebsiteId' int Current website id. Should not be passed manually. It is computed from 'websiteIds'
+     *                       ]
+     */
+    public function reindex($classOrClasses = null, array $context = [])
+    {
+        [$entityClassesToIndex, $websiteIdsToIndex] = $this->inputValidator->validateRequestParameters(
+            $classOrClasses,
+            $context
+        );
+
+        $entityClassesToIndex = $this->getClassesForReindex($entityClassesToIndex);
+        if (empty($context['skip_pre_processing'])) {
+            $this->eventDispatcher->dispatch(
+                new BeforeReindexEvent($classOrClasses, $context),
+                BeforeReindexEvent::EVENT_NAME
+            );
+        }
+
+        $handledItems = 0;
+
+        foreach ($websiteIdsToIndex as $websiteId) {
+            if (!$this->ensureWebsiteExists($websiteId)) {
+                continue;
+            }
+
+            $indexer = $this->configManager->isGallyEnabled($websiteId) ? $this : $this->fallBackIndexer;
+            $websiteContext = $this->indexDataProvider->collectContextForWebsite($websiteId, $context);
+            foreach ($entityClassesToIndex as $entityClass) {
+                $handledItems += $indexer->reindexEntityClass($entityClass, $websiteContext);
+            }
+            // Check again to ensure Website was not deleted during reindexation otherwise drop index
+            if (!$this->ensureWebsiteExists($websiteId)) {
+                $handledItems = 0;
+            }
+        }
+
+        return $handledItems;
     }
 
     protected function reindexEntityClass($entityClass, array $context)

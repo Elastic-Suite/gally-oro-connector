@@ -15,11 +15,11 @@ declare(strict_types=1);
 namespace Gally\OroPlugin\Indexer\EventListener;
 
 use Doctrine\Persistence\ManagerRegistry;
-use Gally\OroPlugin\Search\SearchEngine;
+use Gally\OroPlugin\Config\ConfigManager;
 use Oro\Bundle\InventoryBundle\Entity\InventoryLevel;
 use Oro\Bundle\ProductBundle\EventListener\WebsiteSearchProductIndexerListenerInterface;
-use Oro\Bundle\SearchBundle\Engine\EngineParameters;
 use Oro\Bundle\WarehouseBundle\Provider\EnabledWarehousesProvider;
+use Oro\Bundle\WebsiteSearchBundle\Engine\AbstractIndexer;
 use Oro\Bundle\WebsiteSearchBundle\Engine\Context\ContextTrait;
 use Oro\Bundle\WebsiteSearchBundle\Event\IndexEntityEvent;
 
@@ -32,14 +32,15 @@ class WebsiteSearchInventoryLevelIndexerListener implements WebsiteSearchProduct
 
     public function __construct(
         private ManagerRegistry $doctrine,
-        private EngineParameters $engineParameters,
+        private ConfigManager $configManager,
         private EnabledWarehousesProvider $enabledWarehousesProvider,
     ) {
     }
 
     public function onWebsiteSearchIndex(IndexEntityEvent $event): void
     {
-        if (SearchEngine::ENGINE_NAME !== $this->engineParameters->getEngineName()) {
+        $currentWebsiteId = $event->getContext()[AbstractIndexer::CONTEXT_CURRENT_WEBSITE_ID_KEY];
+        if (!$this->configManager->isGallyEnabled($currentWebsiteId)) {
             return;
         }
 
