@@ -40,7 +40,7 @@ class ContextProvider
     ) {
     }
 
-    public function getCurrentWebsite(): Website
+    public function getCurrentWebsite(): ?Website
     {
         return $this->websiteManager->getCurrentWebsite();
     }

@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Gally\OroPlugin\Indexer\Provider;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Gally\OroPlugin\Config\ConfigManager;
 use Gally\Sdk\Entity\Catalog;
 use Gally\Sdk\Entity\LocalizedCatalog;
 use Oro\Bundle\LocaleBundle\Entity\Localization;
@@ -37,6 +38,7 @@ class CatalogProvider implements ProviderInterface
         EntityManagerInterface $entityManager,
         AbstractWebsiteLocalizationProvider $websiteLocalizationProvider,
         private WebsiteCurrencyProvider $currencyProvider,
+        private ConfigManager $configManager,
     ) {
         /** @var WebsiteRepository $websiteRepository */
         $websiteRepository = $entityManager->getRepository(Website::class);
@@ -51,9 +53,12 @@ class CatalogProvider implements ProviderInterface
     {
         $websites = $this->websiteRepository->findAll();
 
+        /** @var Website $website */
         foreach ($websites as $website) {
-            foreach ($this->websiteLocalizationProvider->getLocalizations($website) as $localization) {
-                yield $this->buildLocalizedCatalog($website, $localization);
+            if ($this->configManager->isGallyEnabled($website->getId())) {
+                foreach ($this->websiteLocalizationProvider->getLocalizations($website) as $localization) {
+                    yield $this->buildLocalizedCatalog($website, $localization);
+                }
             }
         }
     }

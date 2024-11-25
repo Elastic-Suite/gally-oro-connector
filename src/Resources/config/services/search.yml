@@ -1,4 +1,12 @@
 services:
+    oro_website_search.engine.parameters:
+        class: Gally\OroPlugin\Search\EngineParameters
+        public: true
+        arguments:
+            - '%oro_website_search.engine_dsn%'
+            - '@Gally\OroPlugin\Search\ContextProvider'
+            - '@Gally\OroPlugin\Config\ConfigManager'
+
     Gally\OroPlugin\Search\ContextProvider:
         arguments:
             - '@oro_config.manager'

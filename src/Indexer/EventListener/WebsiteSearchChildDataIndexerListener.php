@@ -14,12 +14,12 @@ declare(strict_types=1);
 
 namespace Gally\OroPlugin\Indexer\EventListener;
 
+use Gally\OroPlugin\Config\ConfigManager;
 use Gally\OroPlugin\Indexer\Indexer;
-use Gally\OroPlugin\Search\SearchEngine;
 use Oro\Bundle\LocaleBundle\Entity\Localization;
 use Oro\Bundle\ProductBundle\Entity\Product;
 use Oro\Bundle\ProductBundle\EventListener\WebsiteSearchProductIndexerListenerInterface;
-use Oro\Bundle\SearchBundle\Engine\EngineParameters;
+use Oro\Bundle\WebsiteSearchBundle\Engine\AbstractIndexer;
 use Oro\Bundle\WebsiteSearchBundle\Engine\Context\ContextTrait;
 use Oro\Bundle\WebsiteSearchBundle\Event\IndexEntityEvent;
 
@@ -31,13 +31,14 @@ class WebsiteSearchChildDataIndexerListener implements WebsiteSearchProductIndex
     use ContextTrait;
 
     public function __construct(
-        private EngineParameters $engineParameters,
+        private ConfigManager $configManager,
     ) {
     }
 
     public function onWebsiteSearchIndex(IndexEntityEvent $event): void
     {
-        if (SearchEngine::ENGINE_NAME !== $this->engineParameters->getEngineName()) {
+        $currentWebsiteId = $event->getContext()[AbstractIndexer::CONTEXT_CURRENT_WEBSITE_ID_KEY];
+        if (!$this->configManager->isGallyEnabled($currentWebsiteId)) {
             return;
         }
 

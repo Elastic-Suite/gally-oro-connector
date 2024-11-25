@@ -1,4 +1,11 @@
 services:
+    oro_website_search.indexer:
+        class: 'Oro\Bundle\SearchBundle\Engine\IndexerInterface'
+        arguments:
+            - !tagged_locator { tag: 'oro_website_search.engine.indexer', index_by: 'engine_name' }
+            - '@oro_website_search.engine.parameters'
+        factory: [ 'Gally\OroPlugin\Indexer\IndexerFactory', 'create' ]
+
     Gally\OroPlugin\Decorator\ProductIndexFieldsProvider:
         decorates: oro_product.provider.index_fields
         arguments:
@@ -10,6 +17,7 @@ services:
             - '@doctrine.orm.entity_manager'
             - '@oro_website.provider.website_localization'
             - '@oro_pricing.provider.website_currency_provider'
+            - '@Gally\OroPlugin\Config\ConfigManager'
         tags:
             - { name: 'gally.dataprovider', entity: 'catalog' }
 
@@ -52,7 +60,7 @@ services:
         arguments:
             - '@oro_website_search.manager.website_context_manager'
             - '@doctrine'
-            - '@oro_website_search.engine.parameters'
+            - '@Gally\OroPlugin\Config\ConfigManager'
             - '@oro_web_catalog.web_catalog_provider'
             - '@oro_locale.helper.localization'
         tags:
@@ -61,14 +69,14 @@ services:
     Gally\OroPlugin\Indexer\EventListener\WebsiteSearchInventoryLevelIndexerListener:
         arguments:
             - '@doctrine'
-            - '@oro_website_search.engine.parameters'
+            - '@Gally\OroPlugin\Config\ConfigManager'
             - '@oro_warehouse.provider.enabled_warehouses_provider'
         tags:
             - { name: kernel.event_listener, event: oro_website_search.event.index_entity.product, method: onWebsiteSearchIndex, priority: -255 }
 
     Gally\OroPlugin\Indexer\EventListener\WebsiteSearchChildDataIndexerListener:
         arguments:
-            - '@oro_website_search.engine.parameters'
+            - '@Gally\OroPlugin\Config\ConfigManager'
         tags:
             - { name: kernel.event_listener, event: oro_website_search.event.index_entity.product, method: onWebsiteSearchIndex, priority: -255 }
 
@@ -139,8 +147,8 @@ services:
             - '@Gally\OroPlugin\Indexer\Provider\CatalogProvider'
             - '@Gally\OroPlugin\Indexer\Provider\SourceFieldProvider'
             - '@Gally\Sdk\Service\IndexOperation'
-        #        calls:
-        #            - ['setLogger', ['@logger']]
-        #            - ['setBatchSize', ['%oro_website_search.indexer_batch_size%']]
+            - '@Gally\OroPlugin\Config\ConfigManager'
+        calls:
+            - ['setBatchSize', ['%oro_website_search.indexer_batch_size%']]
         tags:
             - { name: 'oro_website_search.engine.indexer', engine_name: 'gally' }

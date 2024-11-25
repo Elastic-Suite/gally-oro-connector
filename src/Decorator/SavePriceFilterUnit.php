@@ -58,7 +58,7 @@ class SavePriceFilterUnit implements FilterInterface
             $this->contextProvider->setPriceFilterUnit($data['unit']);
         }
 
-        return $this->decorated->apply($ds, $data);
+        return $this->decorated->apply($ds, $data); // @phpstan-ignore argument.type
     }
 
     public function prepareData(array $data): array

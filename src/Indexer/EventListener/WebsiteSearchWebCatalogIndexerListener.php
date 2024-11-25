@@ -15,15 +15,15 @@ declare(strict_types=1);
 namespace Gally\OroPlugin\Indexer\EventListener;
 
 use Doctrine\Persistence\ManagerRegistry;
+use Gally\OroPlugin\Config\ConfigManager;
 use Gally\OroPlugin\Indexer\Indexer;
-use Gally\OroPlugin\Search\SearchEngine;
 use Oro\Bundle\LocaleBundle\Entity\Localization;
 use Oro\Bundle\LocaleBundle\Helper\LocalizationHelper;
 use Oro\Bundle\ProductBundle\EventListener\WebsiteSearchProductIndexerListenerInterface;
-use Oro\Bundle\SearchBundle\Engine\EngineParameters;
 use Oro\Bundle\WebCatalogBundle\Entity\ContentNode;
 use Oro\Bundle\WebCatalogBundle\Provider\WebCatalogProvider;
 use Oro\Bundle\WebsiteBundle\Entity\Website;
+use Oro\Bundle\WebsiteSearchBundle\Engine\AbstractIndexer;
 use Oro\Bundle\WebsiteSearchBundle\Engine\Context\ContextTrait;
 use Oro\Bundle\WebsiteSearchBundle\Event\IndexEntityEvent;
 use Oro\Bundle\WebsiteSearchBundle\Manager\WebsiteContextManager;
@@ -38,7 +38,7 @@ class WebsiteSearchWebCatalogIndexerListener implements WebsiteSearchProductInde
     public function __construct(
         private WebsiteContextManager $websiteContextManager,
         private ManagerRegistry $doctrine,
-        private EngineParameters $engineParameters,
+        private ConfigManager $configManager,
         private WebCatalogProvider $webCatalogProvider,
         protected LocalizationHelper $localizationHelper,
     ) {
@@ -46,11 +46,11 @@ class WebsiteSearchWebCatalogIndexerListener implements WebsiteSearchProductInde
 
     public function onWebsiteSearchIndex(IndexEntityEvent $event): void
     {
-        if (SearchEngine::ENGINE_NAME !== $this->engineParameters->getEngineName()) {
+        $currentWebsiteId = $event->getContext()[AbstractIndexer::CONTEXT_CURRENT_WEBSITE_ID_KEY];
+        if (!$this->configManager->isGallyEnabled($currentWebsiteId)) {
             return;
         }
 
-        // Todo manage partial update ?
         if (!$this->hasContextFieldGroup($event->getContext(), 'main')) {
             return;
         }
@@ -89,8 +89,8 @@ class WebsiteSearchWebCatalogIndexerListener implements WebsiteSearchProductInde
 
                 $event->addField($nodeId, 'level', $level);
                 $event->addField($nodeId, 'path', $path);
-                $event->addField($nodeId, 'name', $name?->getString());
-                $event->addField($nodeId, 'url', $url?->getText());
+                $event->addField($nodeId, 'name', $name?->getString());     // @phpstan-ignore nullsafe.neverNull
+                $event->addField($nodeId, 'url', $url?->getText());         // @phpstan-ignore nullsafe.neverNull
                 $event->addField($nodeId, 'tree', $this->getTree($root, $node, $localization));
             }
         }
@@ -112,7 +112,7 @@ class WebsiteSearchWebCatalogIndexerListener implements WebsiteSearchProductInde
             ? []
             : array_merge(
                 $this->getTree($root, $node->getParentNode(), $localization),
-                [$this->localizationHelper->getLocalizedValue($node->getTitles(), $localization)?->getString()],
+                [$this->localizationHelper->getLocalizedValue($node->getTitles(), $localization)?->getString()], // @phpstan-ignore nullsafe.neverNull
             );
     }
 }

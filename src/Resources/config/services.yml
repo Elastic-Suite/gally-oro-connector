@@ -35,6 +35,12 @@ parameters:
         - brand_LOCALIZATION_ID            # Brand field is managed as a select
 
 services:
+    Gally\OroPlugin\Config\ConfigManager:
+        arguments:
+            - '@doctrine'
+            - '@oro_config.manager'
+            - '@oro_security.encoder.default'
+
     Gally\OroPlugin\Placeholder\PlaceholderDecorator:
         arguments:
             - '@oro_website_search.placeholder.registry'
