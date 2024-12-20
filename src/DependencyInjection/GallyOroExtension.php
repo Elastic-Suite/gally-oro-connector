@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Gally\OroPlugin\DependencyInjection;
 
 use Oro\Bundle\ConfigBundle\DependencyInjection\SettingsBuilder;
+use Oro\Bundle\WarehouseBundle\Provider\EnabledWarehousesProvider;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader;
@@ -30,6 +31,10 @@ class GallyOroExtension extends Extension
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.yml');
         $loader->load('controllers.yml');
+
+        if (class_exists(EnabledWarehousesProvider::class)) {
+            $loader->load('services/enterprise.yml');
+        }
     }
 
     public function getAlias(): string

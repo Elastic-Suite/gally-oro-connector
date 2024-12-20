@@ -1,0 +1,8 @@
+services:
+    Gally\OroPlugin\Indexer\EventListener\WebsiteSearchInventoryLevelIndexerListener:
+        arguments:
+            - '@doctrine'
+            - '@Gally\OroPlugin\Config\ConfigManager'
+            - '@oro_warehouse.provider.enabled_warehouses_provider'
+        tags:
+            - { name: kernel.event_listener, event: oro_website_search.event.index_entity.product, method: onWebsiteSearchIndex, priority: -255 }
