@@ -22,6 +22,8 @@ parameters:
         - manually_added_to
         - category_path
         - category_paths
+        - is_hide_configurable
+        - is_show_single_variant
         - is_variant
         - is_visible_by_default
         - visibility_anonymous
