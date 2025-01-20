@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Gally\OroPlugin\Indexer;
 
 use Gally\OroPlugin\Config\ConfigManager;
+use Gally\OroPlugin\Convector\LocalizationConvector;
 use Gally\OroPlugin\Indexer\Provider\CatalogProvider;
 use Gally\OroPlugin\Indexer\Provider\SourceFieldProvider;
 use Gally\Sdk\Entity\Index;
@@ -190,10 +191,13 @@ class Indexer extends AbstractIndexer
             return [];
         }
 
+        $event = new BeforeSaveIndexDataEvent($entityClass, $entitiesData);
+        $this->eventDispatcher->dispatch($event, BeforeSaveIndexDataEvent::NAME);
+
         $bulk = array_map(fn ($data) => json_encode($data), $entitiesData);
         /** @var Localization $localization */
         $localization = $context[self::CONTEXT_LOCALIZATION];
-        $index = $this->indicesByLocale[$localization->getFormattingCode()];
+        $index = $this->indicesByLocale[LocalizationConvector::getLocaleFormattingCode($localization)];
         $this->indexOperation->executeBulk($index, $bulk);
 
         return array_keys($entitiesData);
