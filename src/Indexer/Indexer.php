@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Gally\OroPlugin\Indexer;
 
 use Gally\OroPlugin\Config\ConfigManager;
+use Gally\OroPlugin\Indexer\Event\BeforeSaveIndexDataEvent;
 use Gally\OroPlugin\Convector\LocalizationConvector;
 use Gally\OroPlugin\Indexer\Provider\CatalogProvider;
 use Gally\OroPlugin\Indexer\Provider\SourceFieldProvider;
