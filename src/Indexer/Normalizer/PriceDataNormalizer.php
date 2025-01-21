@@ -67,9 +67,11 @@ class PriceDataNormalizer extends AbstractNormalizer
     ): void {
         if (Product::class === $entityClass) {
             $prices = [];
+            $isCombinedPriceListEnable = $this->featureChecker->isFeatureEnabled('oro_price_lists_combined');
+            $priceListPlaceHolder = $isCombinedPriceListEnable ? CPLIdPlaceholder::NAME : PriceListIdPlaceholder::NAME;
             $minimalPrices = array_merge(
-                $fieldsValues['minimal_price.CPL_ID_CURRENCY'] ?? [],
-                $fieldsValues['minimal_price.CPL_ID_CURRENCY_UNIT'] ?? [],
+                $fieldsValues["minimal_price.{$priceListPlaceHolder}_CURRENCY"] ?? [],
+                $fieldsValues["minimal_price.{$priceListPlaceHolder}_CURRENCY_UNIT"] ?? [],
             );
             foreach ($this->toArray($minimalPrices) as $value) {
                 $value = $value['value'];
@@ -80,7 +82,7 @@ class PriceDataNormalizer extends AbstractNormalizer
                     $value = $value->getValue();
                 }
 
-                $priceListId = $placeholders[CPLIdPlaceholder::NAME] ?: $placeholders[PriceListIdPlaceholder::NAME];
+                $priceListId = $placeholders[CPLIdPlaceholder::NAME] ?? $placeholders[PriceListIdPlaceholder::NAME];
                 $prices[] = [
                     'price' => (float) $value,
                     'group_id' => $this->priceGroupResolver->getGroupId(
@@ -102,8 +104,8 @@ class PriceDataNormalizer extends AbstractNormalizer
             if (!empty($prices)) {
                 $preparedEntityData['price'] = $prices;
             }
-            unset($fieldsValues['minimal_price.CPL_ID_CURRENCY']);
-            unset($fieldsValues['minimal_price.CPL_ID_CURRENCY_UNIT']);
+            unset($fieldsValues["minimal_price.{$priceListPlaceHolder}_CURRENCY"]);
+            unset($fieldsValues["minimal_price.{$priceListPlaceHolder}_CURRENCY_UNIT"]);
         }
     }
 
