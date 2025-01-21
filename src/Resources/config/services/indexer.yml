@@ -114,6 +114,10 @@ services:
         tags:
             - { name: gally.indexer_normalizer }
 
+    Gally\OroPlugin\Indexer\Normalizer\DatetimeDataNormalizer:
+        tags:
+            - { name: gally.indexer_normalizer }
+
     Gally\OroPlugin\Indexer\IndexDataProvider:
         arguments:
             - '@event_dispatcher'

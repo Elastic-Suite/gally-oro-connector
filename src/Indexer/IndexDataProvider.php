@@ -113,6 +113,10 @@ class IndexDataProvider extends BaseIndexDataProvider
                 );
             }
 
+            /**
+             * @var string $fieldName
+             * @var array $values
+             */
             foreach ($this->toArray($fieldsValues) as $fieldName => $values) {
                 $singleValueFieldName = $this->cleanFieldName((string) $fieldName);
                 foreach ($this->toArray($values) as $value) {
