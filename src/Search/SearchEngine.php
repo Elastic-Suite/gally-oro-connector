@@ -70,7 +70,7 @@ class SearchEngine extends AbstractEngine
                 [$type, $name] = Criteria::explodeFieldTypeName($field);
                 $value = $item[$this->attributeMapping[$name] ?? $name] ?? null;
 
-                if ('inv_status' === $name && isset($item['stock'])) {
+                if (('inv_status' === $name || 'inventory_status' === $name) && isset($item['stock'])) {
                     $value = $item['stock']['status']
                         ? Product::INVENTORY_STATUS_IN_STOCK
                         : Product::INVENTORY_STATUS_OUT_OF_STOCK;

@@ -107,7 +107,7 @@ class ExpressionVisitor extends BaseExpressionVisitor
 
         if ('id' === $field) {
             $type = 'text';
-        } elseif ('inv_status' === $field || 'stock__status' === $field) {
+        } elseif ('inv_status' === $field || 'inventory_status' === $field || 'stock__status' === $field) {
             if (\count($value) > 1) {
                 return null; // if we want in stock and out of stock product, we do not need this filter.
             }

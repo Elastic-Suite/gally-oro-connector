@@ -29,14 +29,24 @@ class StockDataNormalizer extends AbstractNormalizer
         if (Product::class == $entityClass) {
             $status = (!empty($fieldsValues['inv_status']))
                 ? reset($fieldsValues['inv_status'])['value']
-                : Product::INVENTORY_STATUS_OUT_OF_STOCK;
+                : (
+                    !empty($fieldsValues['inventory_status'])
+                        ? reset($fieldsValues['inventory_status'])['value']
+                        : Product::INVENTORY_STATUS_OUT_OF_STOCK
+                );
             $qty = (!empty($fieldsValues['inv_qty']))
                 ? reset($fieldsValues['inv_qty'])['value']
-                : 0;
+                : (
+                    !empty($fieldsValues['inventory_qty'])
+                        ? reset($fieldsValues['inventory_qty'])['value']
+                        : 0
+                );
 
             $preparedEntityData['stock'] = ['status' => Product::INVENTORY_STATUS_IN_STOCK == $status, 'qty' => $qty];
             unset($fieldsValues['inv_status']);
+            unset($fieldsValues['inventory_status']);
             unset($fieldsValues['inv_qty']);
+            unset($fieldsValues['inventory_qty']);
         }
     }
 }

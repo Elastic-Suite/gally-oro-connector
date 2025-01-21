@@ -69,7 +69,7 @@ class GallyRequestBuilder
         $selectedFields = empty($fields) ? [] : ['id'];
         foreach ($fields as $field) {
             [$type, $name] = Criteria::explodeFieldTypeName($field);
-            if (\in_array($name, ['minimal_price', 'inv_status'], true)) {
+            if (\in_array($name, ['minimal_price', 'inv_status', 'inventory_status'], true)) {
                 continue;
             }
             $selectedFields[] = $this->attributeMapping[$name] ?? $name;

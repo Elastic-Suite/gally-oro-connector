@@ -33,6 +33,7 @@ parameters:
     gally_config.field_to_skip:
         - visibility_customer.CUSTOMER_ID  # Field managed manually @see src/Resources/config/oro/website_search.yml
         - inv_status                       # Field managed manually @see oro/src/packages/GallyPlugin/src/Engine/IndexDataProvider.php
+        - inventory_status                 # Field managed manually @see oro/src/packages/GallyPlugin/src/Engine/IndexDataProvider.php
         - inv_qty                          # Field managed manually @see oro/src/packages/GallyPlugin/src/Engine/IndexDataProvider.php
         - brand_LOCALIZATION_ID            # Brand field is managed as a select
 
