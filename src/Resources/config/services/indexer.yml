@@ -130,6 +130,19 @@ services:
             - '%gally_config.attribute_mapping%'
             - !tagged_iterator { tag: 'gally.indexer_normalizer' }
 
+    Gally\OroPlugin\Indexer\Registry\IndexRegistry: ~
+    
+    Gally\OroPlugin\Decorator\AddIndexNameInContext:
+        decorates: oro_website_search.async.indexer.message_granularizer.reindex
+        arguments:
+            - '@.inner'
+            - '@Gally\OroPlugin\Indexer\Registry\IndexRegistry'
+    
+    Gally\OroPlugin\Decorator\AddIndexNameInReindexMessage:
+        decorates: oro_website_search.indexer.input_validator
+        arguments:
+            - '@.inner'
+            
     Gally\OroPlugin\Indexer\Indexer:
         arguments:
             - '@oro_entity.doctrine_helper'
@@ -145,7 +158,10 @@ services:
             - '@Gally\OroPlugin\Indexer\Provider\SourceFieldProvider'
             - '@Gally\Sdk\Service\IndexOperation'
             - '@Gally\OroPlugin\Config\ConfigManager'
+            - '@Gally\OroPlugin\Indexer\Registry\IndexRegistry'
         calls:
             - ['setBatchSize', ['%oro_website_search.indexer_batch_size%']]
         tags:
             - { name: 'oro_website_search.engine.indexer', engine_name: 'gally' }
+            - { name: kernel.event_listener, event: oro_website_search.before_reindex, method: beforeReindex, priority: -255 }
+            - { name: kernel.event_listener, event: oro_website_search.after_reindex, method: afterReindex, priority: -255 }

@@ -15,10 +15,12 @@ declare(strict_types=1);
 namespace Gally\OroPlugin\Indexer;
 
 use Gally\OroPlugin\Config\ConfigManager;
-use Gally\OroPlugin\Indexer\Event\BeforeSaveIndexDataEvent;
 use Gally\OroPlugin\Convector\LocalizationConvector;
+use Gally\OroPlugin\Entity\IndexBatchCount;
+use Gally\OroPlugin\Indexer\Event\BeforeSaveIndexDataEvent;
 use Gally\OroPlugin\Indexer\Provider\CatalogProvider;
 use Gally\OroPlugin\Indexer\Provider\SourceFieldProvider;
+use Gally\OroPlugin\Indexer\Registry\IndexRegistry;
 use Gally\Sdk\Entity\Index;
 use Gally\Sdk\Entity\LocalizedCatalog;
 use Gally\Sdk\Service\IndexOperation;
@@ -27,8 +29,10 @@ use Oro\Bundle\LocaleBundle\Entity\Localization;
 use Oro\Bundle\SearchBundle\Provider\SearchMappingProvider;
 use Oro\Bundle\WebsiteBundle\Provider\AbstractWebsiteLocalizationProvider;
 use Oro\Bundle\WebsiteSearchBundle\Engine\AbstractIndexer;
+use Oro\Bundle\WebsiteSearchBundle\Engine\Context\ContextTrait;
 use Oro\Bundle\WebsiteSearchBundle\Engine\IndexDataProvider;
 use Oro\Bundle\WebsiteSearchBundle\Engine\IndexerInputValidator;
+use Oro\Bundle\WebsiteSearchBundle\Event\AfterReindexEvent;
 use Oro\Bundle\WebsiteSearchBundle\Event\BeforeReindexEvent;
 use Oro\Bundle\WebsiteSearchBundle\Placeholder\PlaceholderInterface;
 use Oro\Bundle\WebsiteSearchBundle\Resolver\EntityDependenciesResolverInterface;
@@ -36,12 +40,14 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class Indexer extends AbstractIndexer
 {
+    use ContextTrait;
+
     public const CONTEXT_LOCALIZATION = 'localization';
 
     /** @var LocalizedCatalog[][] */
     private array $localizedCatalogByWebsite;
 
-    /** @var Index[] */
+    /** @var Index[]|string[] */
     private array $indicesByLocale;
 
     private AbstractIndexer $fallBackIndexer;
@@ -60,6 +66,7 @@ class Indexer extends AbstractIndexer
         private SourceFieldProvider $sourceFieldProvider,
         private IndexOperation $indexOperation,
         private ConfigManager $configManager,
+        private IndexRegistry $indexRegistry,
     ) {
         parent::__construct(
             $doctrineHelper,
@@ -94,6 +101,7 @@ class Indexer extends AbstractIndexer
                 new BeforeReindexEvent($classOrClasses, $context),
                 BeforeReindexEvent::EVENT_NAME
             );
+            $context['indices_by_locale'] = $this->indexRegistry->getIndicesByLocale();
         }
 
         $handledItems = 0;
@@ -118,6 +126,66 @@ class Indexer extends AbstractIndexer
         return $handledItems;
     }
 
+    public function beforeReindex(BeforeReindexEvent $event): void
+    {
+        [$entityClassesToIndex, $websiteIdsToIndex] = $this->inputValidator->validateRequestParameters(
+            $event->getClassOrClasses(),
+            $event->getContext()
+        );
+        $entityClassesToIndex = $this->getClassesForReindex($entityClassesToIndex);
+        $context = $event->getContext();
+        $indicesByLocale = [];
+        $isFullContext = empty($this->getContextEntityIds($context));
+
+        foreach ($websiteIdsToIndex as $websiteId) {
+            if ($this->configManager->isGallyEnabled($websiteId)) {
+                foreach ($entityClassesToIndex as $entityClass) {
+                    $indicesByLocale[$websiteId][$entityClass] = $this->getIndexByLocal(
+                        $websiteId,
+                        $entityClass,
+                        $isFullContext
+                    );
+                }
+            }
+        }
+
+        $this->indexRegistry->setIndicesByLocale($indicesByLocale);
+    }
+
+    public function afterReindex(AfterReindexEvent $event): void
+    {
+        $context = $event->getWebsiteContext();
+        $contextEntityIds = $this->getContextEntityIds($context);
+        $entityClass = $event->getEntityClass();
+        $websiteId = $context[self::CONTEXT_CURRENT_WEBSITE_ID_KEY];
+
+        // Sync full reindexation
+        if (empty($contextEntityIds)) {
+            foreach ($this->indicesByLocale[$websiteId][$entityClass] as $index) {
+                $this->installIndex($index);
+            }
+        }
+
+        // Async full reindexation, we need to check if all message has been received.
+        if ($context['is_full_indexation'] ?? false) {
+            $batchCountManager = $this->doctrineHelper->getEntityManager(IndexBatchCount::class);
+            foreach ($this->indicesByLocale[$websiteId][$entityClass] as $index) {
+                $index = \is_string($index) ? $index : $index->getName();
+                /** @var IndexBatchCount $messageCount */
+                $messageCount = $batchCountManager->find(IndexBatchCount::class, $index) ?: new IndexBatchCount($index);
+
+                if ($messageCount->getMessageCount() < $context['message_count']) {
+                    $messageCount->increment();
+                    $batchCountManager->persist($messageCount);
+                } else {
+                    $this->installIndex($index);
+                    $batchCountManager->remove($messageCount);
+                }
+                $batchCountManager->flush();
+            }
+        }
+    }
+
     protected function reindexEntityClass($entityClass, array $context)
     {
         if ('Oro\Bundle\WebsiteElasticSearchBundle\Entity\SavedSearch' === $entityClass) {
@@ -125,15 +193,9 @@ class Indexer extends AbstractIndexer
             return 0;
         }
 
-        $websiteId = $context[AbstractIndexer::CONTEXT_CURRENT_WEBSITE_ID_KEY];
-        $metadata = $this->sourceFieldProvider->getMetadataFromEntityClass($entityClass);
-
-        // Initialize indices list.
-        $this->indicesByLocale = [];
-        foreach ($this->getLocalizedCatalogByWebsite($websiteId) as $localizedCatalog) {
-            $index = $this->indexOperation->createIndex($metadata, $localizedCatalog);
-            $this->indicesByLocale[$localizedCatalog->getLocale()] = $index;
-        }
+        $websiteId = $context[self::CONTEXT_CURRENT_WEBSITE_ID_KEY];
+        $this->indicesByLocale = ($context['indices_by_locale'] ?? [])
+            ?: [$websiteId => [$entityClass => $this->getIndexByLocal($websiteId, $entityClass)]];
 
         return parent::reindexEntityClass($entityClass, $context);
     }
@@ -142,15 +204,106 @@ class Indexer extends AbstractIndexer
     {
         $result = [];
 
+        $restrictedEntities = $this->getRestrictedEntities($entityIds, $context, $entityClass);
+
+        if (!$restrictedEntities) {
+            return [];
+        }
+
         $websiteId = $context[self::CONTEXT_CURRENT_WEBSITE_ID_KEY];
         $localizations = $this->websiteLocalizationProvider->getLocalizationsByWebsiteId($websiteId);
 
         foreach ($localizations as $localization) {
             $context[self::CONTEXT_LOCALIZATION] = $localization;
-            $result = parent::indexEntities($entityClass, $entityIds, $context, $aliasToSave);
+            $entityConfig = $this->mappingProvider->getEntityConfig($entityClass);
+
+            // Unset context field group because Gally is not able to manage partial documents.
+            unset($context[AbstractIndexer::CONTEXT_FIELD_GROUPS]);
+            $entitiesData = $this->indexDataProvider->getEntitiesData(
+                $entityClass,
+                $restrictedEntities,
+                $context,
+                $entityConfig
+            );
+
+            $result = $this->saveIndexData($entityClass, $entitiesData, $aliasToSave, $context);
         }
 
         return $result;
+    }
+
+    public function delete($entity, array $context = []): bool
+    {
+        // Index deletion is managed by gally on install.
+        return true;
+    }
+
+    public function resetIndex($class = null, array $context = [])
+    {
+    }
+
+    protected function saveIndexData($entityClass, array $entitiesData, $entityAliasTemp, array $context)
+    {
+        $realAlias = $this->getEntityAlias($entityClass, $context);
+
+        if (null === $realAlias || empty($entitiesData)) {
+            return [];
+        }
+
+        $event = new BeforeSaveIndexDataEvent($entityClass, $entitiesData);
+        $this->eventDispatcher->dispatch($event, BeforeSaveIndexDataEvent::NAME);
+        $bulk = array_map(fn ($data) => json_encode($data), $entitiesData);
+        $websiteId = $context[self::CONTEXT_CURRENT_WEBSITE_ID_KEY];
+        /** @var Localization $localization */
+        $localization = $context[self::CONTEXT_LOCALIZATION];
+        $locale = LocalizationConvector::getLocaleFormattingCode($localization);
+        $index = $this->indicesByLocale[$websiteId][$entityClass][$locale] ?? null;
+
+        if (!$index) {
+            throw new \LogicException(sprintf('Missing index for website %d, class %s and locale %s.', $websiteId, $entityClass, $locale));
+        }
+        $this->indexOperation->executeBulk($index, $bulk);
+
+        return array_keys($entitiesData);
+    }
+
+    protected function savePartialIndexData($entityClass, array $entitiesData, $entityAliasTemp, array $context): array
+    {
+        // Partial indexation not manage with Gally @see Indexer/Indexer.php:221
+        return [];
+    }
+
+    protected function getIndexedEntities($entityClass, array $entities, array $context): array
+    {
+        // Partial indexation not manage with Gally @see Indexer/Indexer.php:221
+        return [];
+    }
+
+    protected function renameIndex($temporaryAlias, $currentAlias): void
+    {
+    }
+
+    protected function getIndexByLocal(int $websiteId, string $entityClass, bool $isFullContext = false)
+    {
+        $indicesByLocale = [];
+        $metadata = $this->sourceFieldProvider->getMetadataFromEntityClass($entityClass);
+        foreach ($this->getLocalizedCatalogByWebsite($websiteId) as $localizedCatalog) {
+            if ($isFullContext) {
+                $index = $this->indexOperation->createIndex($metadata, $localizedCatalog);
+            } else {
+                $index = $this->indexOperation->getIndexByName($metadata, $localizedCatalog);
+            }
+
+            $indicesByLocale[$localizedCatalog->getLocale()] = $index->getName();
+        }
+
+        return $indicesByLocale;
+    }
+
+    protected function installIndex(Index|string $index): void
+    {
+        $this->indexOperation->refreshIndex($index);
+        $this->indexOperation->installIndex($index);
     }
 
     /**
@@ -171,56 +324,5 @@ class Indexer extends AbstractIndexer
         $catalogCode = $this->catalogProvider->getCatalogCodeFromWebsiteId($websiteId);
 
         return $this->localizedCatalogByWebsite[$catalogCode];
-    }
-
-    public function delete($entity, array $context = []): bool
-    {
-        // TODO: Implement delete() method.
-        return true;
-    }
-
-    public function resetIndex($class = null, array $context = [])
-    {
-        // TODO: Implement resetIndex() method.
-    }
-
-    protected function saveIndexData($entityClass, array $entitiesData, $entityAliasTemp, array $context)
-    {
-        $realAlias = $this->getEntityAlias($entityClass, $context);
-
-        if (null === $realAlias || empty($entitiesData)) {
-            return [];
-        }
-
-        $event = new BeforeSaveIndexDataEvent($entityClass, $entitiesData);
-        $this->eventDispatcher->dispatch($event, BeforeSaveIndexDataEvent::NAME);
-
-        $bulk = array_map(fn ($data) => json_encode($data), $entitiesData);
-        /** @var Localization $localization */
-        $localization = $context[self::CONTEXT_LOCALIZATION];
-        $index = $this->indicesByLocale[LocalizationConvector::getLocaleFormattingCode($localization)];
-        $this->indexOperation->executeBulk($index, $bulk);
-
-        return array_keys($entitiesData);
-    }
-
-    protected function savePartialIndexData($entityClass, array $entitiesData, $entityAliasTemp, array $context): array
-    {
-        // TODO: Implement savePartialIndexData() method.
-        return [];
-    }
-
-    protected function getIndexedEntities($entityClass, array $entities, array $context): array
-    {
-        // TODO: Implement getIndexedEntities() method.
-        return [];
-    }
-
-    protected function renameIndex($temporaryAlias, $currentAlias): void
-    {
-        foreach ($this->indicesByLocale as $index) {
-            $this->indexOperation->refreshIndex($index);
-            $this->indexOperation->installIndex($index);
-        }
     }
 }

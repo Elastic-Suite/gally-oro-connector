@@ -18,7 +18,7 @@ use Symfony\Contracts\EventDispatcher\Event;
 
 class BeforeSaveIndexDataEvent extends Event
 {
-    const NAME = 'gally.indexer.before_save_index_data';
+    public const NAME = 'gally.indexer.before_save_index_data';
 
     public function __construct(
         private string $class,

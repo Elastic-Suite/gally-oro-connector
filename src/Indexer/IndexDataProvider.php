@@ -115,7 +115,7 @@ class IndexDataProvider extends BaseIndexDataProvider
 
             /**
              * @var string $fieldName
-             * @var array $values
+             * @var array  $values
              */
             foreach ($this->toArray($fieldsValues) as $fieldName => $values) {
                 $singleValueFieldName = $this->cleanFieldName((string) $fieldName);

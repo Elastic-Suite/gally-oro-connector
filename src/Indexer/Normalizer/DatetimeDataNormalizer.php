@@ -14,9 +14,6 @@ declare(strict_types=1);
 
 namespace Gally\OroPlugin\Indexer\Normalizer;
 
-use Oro\Bundle\EntityConfigBundle\Config\Id\FieldConfigId;
-use Oro\Bundle\EntityConfigBundle\Exception\RuntimeException;
-use Oro\Bundle\EntityConfigBundle\Provider\ConfigProvider;
 use Oro\Bundle\LocaleBundle\Entity\Localization;
 use Oro\Bundle\WebsiteBundle\Entity\Website;
 

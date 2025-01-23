@@ -26,6 +26,7 @@ parameters:
         - is_show_single_variant
         - is_variant
         - is_visible_by_default
+        - oro_type
         - visibility_anonymous
         - visibility_new
         - visible_for_customer
