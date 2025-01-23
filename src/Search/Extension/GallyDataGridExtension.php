@@ -37,14 +37,19 @@ class GallyDataGridExtension extends AbstractExtension
         private EngineParameters $engineParameters,
         private SearchManager $searchManager,
         private ContextProvider $contextProvider,
+        private array $dataGridNames,
     ) {
+    }
+
+    public function addDataGridName(string $name): void
+    {
+        $this->dataGridNames[] = $name;
     }
 
     public function isApplicable(DatagridConfiguration $config): bool
     {
         return SearchEngine::ENGINE_NAME === $this->engineParameters->getEngineName()
-            && ('frontend-product-search-grid' === $config->getName()
-            || 'frontend-catalog-allproducts-grid' === $config->getName());
+            && \in_array($config->getName(), $this->dataGridNames, true);
     }
 
     public function visitDatasource(DatagridConfiguration $config, DatasourceInterface $datasource): void

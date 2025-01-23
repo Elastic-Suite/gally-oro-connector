@@ -19,10 +19,6 @@ use Doctrine\DBAL\Types\Types;
 use Oro\Bundle\MigrationBundle\Migration\Installation;
 use Oro\Bundle\MigrationBundle\Migration\QueryBag;
 
-/**
- * @SuppressWarnings(PHPMD.TooManyMethods)
- * @SuppressWarnings(PHPMD.ExcessiveClassLength)
- */
 class GallyOroBundleInstaller implements Installation
 {
     /**
