@@ -29,3 +29,8 @@ Oro\Bundle\ProductBundle\Entity\Brand:
     fields:
         - name: id
           type: integer
+          
+Oro\Bundle\WebsiteSearchSuggestionBundle\Entity\Suggestion:
+    fields:
+        - name: id
+          type: integer
