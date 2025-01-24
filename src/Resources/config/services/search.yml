@@ -22,8 +22,10 @@ services:
             - '@Gally\OroPlugin\Service\ContextProvider'
             - '@Gally\OroPlugin\Search\ExpressionVisitor'
             - '@Gally\OroPlugin\Resolver\PriceGroupResolver'
+            - '@Gally\Sdk\Service\SearchManager'
             - '@oro_website_search.placeholder.registry'
             - '%gally_config.attribute_mapping%'
+            - '@cache.app'
 
     Gally\OroPlugin\Search\Filter\SelectFilter:
         public: false
@@ -43,8 +45,6 @@ services:
             - '@event_dispatcher'
             - '@Gally\OroPlugin\Resolver\QueryPlaceholderResolver'
             - '@oro_website_search.provider.search_mapping'
-            #            - '@oro_website_elastic_search.engine.index_agent'
-            #            - '@oro_website_elastic_search.request_builder.registry'
             - '@Gally\Sdk\Service\SearchManager'
             - '@Gally\OroPlugin\Search\GallyRequestBuilder'
             - '@Gally\OroPlugin\Service\ContextProvider'

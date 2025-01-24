@@ -18,12 +18,14 @@ use Gally\OroPlugin\Resolver\PriceGroupResolver;
 use Gally\OroPlugin\Service\ContextProvider;
 use Gally\Sdk\Entity\Metadata;
 use Gally\Sdk\GraphQl\Request;
+use Gally\Sdk\Service\SearchManager;
 use Oro\Bundle\PricingBundle\Placeholder\CPLIdPlaceholder;
 use Oro\Bundle\PricingBundle\Placeholder\CurrencyPlaceholder;
 use Oro\Bundle\PricingBundle\Placeholder\PriceListIdPlaceholder;
 use Oro\Bundle\SearchBundle\Query\Criteria\Criteria;
 use Oro\Bundle\SearchBundle\Query\Query;
 use Oro\Bundle\WebsiteSearchBundle\Placeholder\PlaceholderRegistry;
+use Psr\Cache\CacheItemPoolInterface;
 
 class GallyRequestBuilder
 {
@@ -31,15 +33,17 @@ class GallyRequestBuilder
         private ContextProvider $contextProvider,
         private ExpressionVisitor $expressionVisitor,
         private PriceGroupResolver $priceGroupResolver,
+        private SearchManager $searchManager,
         private PlaceholderRegistry $registry,
         private array $attributeMapping,
+        private CacheItemPoolInterface $cache,
     ) {
     }
 
     public function build(Query $query, array $context): Request
     {
         $from = $query->getFrom();
-        $entityCode = str_replace('website_search_', '', str_replace('oro_', '', $from[0]));
+        $entityCode = preg_replace('/^(?:oro_|website_search_)(?<entityCode>.+?)(?:_\d+)?$/', '$1', $from[0]);
         $metadata = new Metadata($entityCode);
 
         [$currentPage, $pageSize] = $this->getPaginationInfo($query);
@@ -51,7 +55,7 @@ class GallyRequestBuilder
             $this->contextProvider->getCurrentLocalizedCatalog(),
             $metadata,
             $this->contextProvider->isAutocompleteContext(),
-            $this->getSelectedFields($query),
+            $this->getSelectedFields($metadata, $query),
             $currentPage,
             $pageSize,
             $currentContentNode ? (string) $currentContentNode->getId() : null,
@@ -63,8 +67,23 @@ class GallyRequestBuilder
         );
     }
 
-    private function getSelectedFields(Query $query): array
+    private function getSelectedFields(Metadata $metadata, Query $query): array
     {
+        $cacheKey = 'gally_select_source_fields';
+        $cacheItem = $this->cache->getItem($cacheKey);
+
+        if (!$cacheItem->isHit()) {
+            $selectSourceFields = [];
+            foreach ($this->searchManager->getSelectSourceField($metadata) as $sourceField) {
+                $selectSourceFields[$sourceField->getCode()] = $sourceField->getCode();
+            }
+
+            $cacheItem->set($selectSourceFields);
+            $cacheItem->expiresAfter(3600);
+            $this->cache->save($cacheItem);
+        }
+
+        $selectSourceFields = $cacheItem->get();
         $fields = $query->getSelect();
         $selectedFields = empty($fields) ? [] : ['id'];
         foreach ($fields as $field) {
@@ -72,7 +91,10 @@ class GallyRequestBuilder
             if (\in_array($name, ['minimal_price', 'inv_status', 'inventory_status'], true)) {
                 continue;
             }
-            $selectedFields[] = $this->attributeMapping[$name] ?? $name;
+            $fieldName = $this->attributeMapping[$name] ?? $name;
+            $selectedFields[] = \array_key_exists($fieldName, $selectSourceFields)
+                ? "$fieldName { label value }"
+                : $fieldName;
         }
 
         return $selectedFields;

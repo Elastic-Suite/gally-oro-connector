@@ -76,6 +76,8 @@ class SearchEngine extends AbstractEngine
                         : Product::INVENTORY_STATUS_OUT_OF_STOCK;
                 } elseif ('minimal_price' === $name && isset($item['price'])) {
                     $value = $item['price'][0]['price'];
+                } elseif (\is_array($value)) {
+                    $value = reset($value)['label'];
                 }
 
                 $item[$name] = $value;
