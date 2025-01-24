@@ -32,6 +32,7 @@ use Oro\Bundle\WebsiteSearchBundle\Engine\AbstractIndexer;
 use Oro\Bundle\WebsiteSearchBundle\Engine\Context\ContextTrait;
 use Oro\Bundle\WebsiteSearchBundle\Engine\IndexDataProvider;
 use Oro\Bundle\WebsiteSearchBundle\Engine\IndexerInputValidator;
+use Oro\Bundle\WebsiteSearchBundle\Entity\Repository\EntityIdentifierRepository;
 use Oro\Bundle\WebsiteSearchBundle\Event\AfterReindexEvent;
 use Oro\Bundle\WebsiteSearchBundle\Event\BeforeReindexEvent;
 use Oro\Bundle\WebsiteSearchBundle\Placeholder\PlaceholderInterface;
@@ -67,6 +68,7 @@ class Indexer extends AbstractIndexer
         private IndexOperation $indexOperation,
         private ConfigManager $configManager,
         private IndexRegistry $indexRegistry,
+        private EntityIdentifierRepository $entityIdentifierRepository,
     ) {
         parent::__construct(
             $doctrineHelper,
@@ -145,6 +147,13 @@ class Indexer extends AbstractIndexer
                         // Todo managed savedSearch https://doc.oroinc.com/user/storefront/account/saved-search/
                         continue;
                     }
+
+                    // Don't create index for entity type without any entity.
+                    $entityCount = iterator_count($this->entityIdentifierRepository->getIds($entityClass));
+                    if (!$entityCount) {
+                        continue;
+                    }
+
                     $indicesByLocale[$websiteId][$entityClass] = $this->getIndexByLocal(
                         $websiteId,
                         $entityClass,
@@ -164,6 +173,10 @@ class Indexer extends AbstractIndexer
         $entityClass = $event->getEntityClass();
         $websiteId = $context[self::CONTEXT_CURRENT_WEBSITE_ID_KEY];
 
+        if (!$this->configManager->isGallyEnabled($websiteId)) {
+            return;
+        }
+
         // Sync full reindexation
         if (empty($contextEntityIds)) {
             foreach ($this->indicesByLocale[$websiteId][$entityClass] as $index) {
@@ -174,12 +187,13 @@ class Indexer extends AbstractIndexer
         // Async full reindexation, we need to check if all message has been received.
         if ($context['is_full_indexation'] ?? false) {
             $batchCountManager = $this->doctrineHelper->getEntityManager(IndexBatchCount::class);
+            $totalMessageExpected = $context['message_count'][$websiteId] ?? $context['message_count']['global'];
             foreach ($this->indicesByLocale[$websiteId][$entityClass] as $index) {
                 $index = \is_string($index) ? $index : $index->getName();
                 /** @var IndexBatchCount $messageCount */
                 $messageCount = $batchCountManager->find(IndexBatchCount::class, $index) ?: new IndexBatchCount($index);
 
-                if ($messageCount->getMessageCount() < $context['message_count']) {
+                if ($messageCount->getMessageCount() < $totalMessageExpected) {
                     $messageCount->increment();
                     $batchCountManager->persist($messageCount);
                 } else {

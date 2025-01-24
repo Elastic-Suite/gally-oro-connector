@@ -159,6 +159,7 @@ services:
             - '@Gally\Sdk\Service\IndexOperation'
             - '@Gally\OroPlugin\Config\ConfigManager'
             - '@Gally\OroPlugin\Indexer\Registry\IndexRegistry'
+            - '@oro_website_search.entity_identifier_repository'
         calls:
             - ['setBatchSize', ['%oro_website_search.indexer_batch_size%']]
         tags:

@@ -52,14 +52,33 @@ class AddIndexNameInContext extends ReindexMessageGranularizer
             $context['indices_by_locale'] = $this->indexRegistry->getIndicesByLocale();
         }
 
-        $childMessages = iterator_to_array($this->decorated->process($entities, $websites, $context));
-        $messageCount = \count($childMessages);
+        $messageCount = [];
+        $childMessages = [];
+        foreach ($this->decorated->process($entities, $websites, $context) as $childMessage) {
+            $entityClass = reset($childMessage['class']);
 
-        foreach ($childMessages as $message) {
-            $message['context']['indices_by_locale'] = $context['indices_by_locale'];
-            $message['context']['message_count'] = $messageCount;
-            $message['context']['is_full_indexation'] = $isFullIndexation;
-            yield $message;
+            foreach ($childMessage['context']['websiteIds'] ?? [] as $websiteId) {
+                if (!isset($messageCount[$entityClass][$websiteId])) {
+                    $messageCount[$entityClass][$websiteId] = 0;
+                }
+                ++$messageCount[$entityClass][$websiteId];
+            }
+
+            if (!isset($messageCount[$entityClass]['global'])) {
+                $messageCount[$entityClass]['global'] = 0;
+            }
+            ++$messageCount[$entityClass]['global'];
+
+            $childMessages[] = $childMessage;
+        }
+
+        foreach ($childMessages as $childMessage) {
+            $entityClass = reset($childMessage['class']);
+            $childMessage['context']['indices_by_locale'] = $context['indices_by_locale'];
+            $childMessage['context']['message_count'] = $messageCount[$entityClass];
+            $childMessage['context']['is_full_indexation'] = $isFullIndexation;
+
+            yield $childMessage;
         }
     }
 }
