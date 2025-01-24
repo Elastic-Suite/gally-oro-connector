@@ -31,6 +31,7 @@ class GallyOroExtension extends Extension
         $loader->load('services.yml');
         $loader->load('controllers.yml');
 
+        // Use class path in a string because this class might not exist if enterprise bundles are not installed.
         if (class_exists('Oro\Bundle\WarehouseBundle\Provider\EnabledWarehousesProvider')) {
             $loader->load('services/enterprise.yml');
         }

@@ -60,6 +60,7 @@ class SourceFieldOptionProvider implements ProviderInterface
     public function provide(): iterable
     {
         foreach ($this->mappingProvider->getEntityClasses() as $entityClass) {
+            // Use class path in a string because this class might not exist if enterprise bundles are not installed.
             if ('Oro\Bundle\WebsiteElasticSearchBundle\Entity\SavedSearch' === $entityClass) {
                 // Todo managed savedSearch https://doc.oroinc.com/user/storefront/account/saved-search/
                 continue;
