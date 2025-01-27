@@ -27,3 +27,18 @@ composer require gally/oro-plugin:dev-master
 - They should also appear in your Oro frontend when searching or browsing categories.
 - And you're done !
 
+## Devlopement
+
+If you need to update indexation behavior, you need to test various way to run the reindex process in oro
+Fisrt you need to test various combinations of these options of the reindex command :
+```shell
+bin/console oro:website-search:reindex
+bin/console oro:website-search:reindex --scheduled # Async reindex with message queue
+bin/console oro:website-search:reindex --website-id=3 # Specify the websites you want to reindex
+bin/console oro:website-search:reindex --ids=1000-2000 # Specify the ids range you want to reindex
+bin/console oro:website-search:reindex --class="Oro\Bundle\WebCatalogBundle\Entity\ContentNode" # Specify the entities you want to reindex
+```
+
+Then you need to test update of product of contentNode from oro backend (you need to have an active consumer for this).
+You can run a consumer with the command `bin/console oro:message-queue:consume`.
+

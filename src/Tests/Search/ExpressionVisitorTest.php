@@ -19,6 +19,8 @@ use Doctrine\Common\Collections\Expr\CompositeExpression;
 use Doctrine\Common\Collections\Expr\Expression;
 use Doctrine\Common\Collections\Expr\Value;
 use Gally\OroPlugin\Search\ExpressionVisitor;
+use Gally\Sdk\Entity\Metadata;
+use Gally\Sdk\Entity\SourceField;
 use Oro\Bundle\TestFrameworkBundle\Test\WebTestCase;
 
 class ExpressionVisitorTest extends WebTestCase
@@ -37,6 +39,17 @@ class ExpressionVisitorTest extends WebTestCase
         ?array $gallyFilters,
     ): void {
         $exprVisitor = new ExpressionVisitor($this->attributeMapping);
+        $exprVisitor->setSelectSourceFields(
+            [
+                'brand' => new SourceField(
+                    new Metadata('product'),
+                    'brand',
+                    SourceField::TYPE_SELECT,
+                    'Brand',
+                    [],
+                )
+            ]
+        );
         self::assertSame($gallyFilters, $exprVisitor->dispatch($expr));
     }
 
@@ -124,6 +137,10 @@ class ExpressionVisitorTest extends WebTestCase
         yield [
             new Comparison('decimal.price__price', '>=', '100'),
             ['rangeFilter' => ['field' => 'price__price', 'gte' => '100']],
+        ];
+        yield [
+            new Comparison('integer.brand', '=', 1234),
+            ['equalFilter' => ['field' => 'brand__value', 'eq' => '1234']],
         ];
         yield [
             new CompositeExpression(
@@ -241,6 +258,17 @@ class ExpressionVisitorTest extends WebTestCase
         ?array $gallyFilters,
     ): void {
         $exprVisitor = new ExpressionVisitor($this->attributeMapping);
+        $exprVisitor->setSelectSourceFields(
+            [
+                'brand' => new SourceField(
+                    new Metadata('product'),
+                    'brand',
+                    SourceField::TYPE_SELECT,
+                    'Brand',
+                    [],
+                )
+            ]
+        );
         self::assertSame($gallyFilters, $exprVisitor->dispatch($expr, true));
     }
 
@@ -328,6 +356,10 @@ class ExpressionVisitorTest extends WebTestCase
         yield [
             new Comparison('decimal.price__price', '>=', 100),
             ['price__price' => ['gte' => 100.0]],
+        ];
+        yield [
+            new Comparison('integer.brand', '=', 1234),
+            ['brand__value' => ['eq' => "1234"]],
         ];
         yield [
             new CompositeExpression(

@@ -17,6 +17,7 @@ namespace Gally\OroPlugin\Search;
 use Gally\OroPlugin\Resolver\PriceGroupResolver;
 use Gally\OroPlugin\Service\ContextProvider;
 use Gally\Sdk\Entity\Metadata;
+use Gally\Sdk\Entity\SourceField;
 use Gally\Sdk\GraphQl\Request;
 use Gally\Sdk\Service\SearchManager;
 use Oro\Bundle\PricingBundle\Placeholder\CPLIdPlaceholder;
@@ -43,19 +44,21 @@ class GallyRequestBuilder
     public function build(Query $query, array $context): Request
     {
         $from = $query->getFrom();
-        $entityCode = preg_replace('/^(?:oro_|website_search_)(?<entityCode>.+?)(?:_\d+)?$/', '$1', $from[0]);
+        $entityCode = preg_replace('/^(?:oro_website_search_|oro_|website_search_)(?<entityCode>.+?)(?:_\d+)?$/', '$1', $from[0]);
+
         $metadata = new Metadata($entityCode);
 
+        $selectSourceFields = $this->getSelectSourceField($metadata);
         [$currentPage, $pageSize] = $this->getPaginationInfo($query);
         [$sortField, $sortDirection] = $this->getSortInfo($query);
-        [$searchQuery, $filters] = $this->getFilters($query, $metadata);
+        [$searchQuery, $filters] = $this->getFilters($query, $metadata, $selectSourceFields);
         $currentContentNode = $this->contextProvider->getCurrentContentNode();
 
         return new Request(
             $this->contextProvider->getCurrentLocalizedCatalog(),
             $metadata,
             $this->contextProvider->isAutocompleteContext(),
-            $this->getSelectedFields($metadata, $query),
+            $this->getSelectedFields($metadata, $query, $selectSourceFields),
             $currentPage,
             $pageSize,
             $currentContentNode ? (string) $currentContentNode->getId() : null,
@@ -67,23 +70,8 @@ class GallyRequestBuilder
         );
     }
 
-    private function getSelectedFields(Metadata $metadata, Query $query): array
+    private function getSelectedFields(Metadata $metadata, Query $query, array $selectSourceFields): array
     {
-        $cacheKey = 'gally_select_source_fields';
-        $cacheItem = $this->cache->getItem($cacheKey);
-
-        if (!$cacheItem->isHit()) {
-            $selectSourceFields = [];
-            foreach ($this->searchManager->getSelectSourceField($metadata) as $sourceField) {
-                $selectSourceFields[$sourceField->getCode()] = $sourceField->getCode();
-            }
-
-            $cacheItem->set($selectSourceFields);
-            $cacheItem->expiresAfter(3600);
-            $this->cache->save($cacheItem);
-        }
-
-        $selectSourceFields = $cacheItem->get();
         $fields = $query->getSelect();
         $selectedFields = empty($fields) ? [] : ['id'];
         foreach ($fields as $field) {
@@ -138,9 +126,10 @@ class GallyRequestBuilder
     /**
      * @return array{0: ?string, 1: array}
      */
-    private function getFilters(Query $query, Metadata $metadata): array
+    private function getFilters(Query $query, Metadata $metadata, array $selectSourceFields): array
     {
         $filters = [];
+        $this->expressionVisitor->setSelectSourceFields($selectSourceFields);
 
         if ($expression = $query->getCriteria()->getWhereExpression()) {
             $filters = $this->expressionVisitor->dispatch($expression, 'product' === $metadata->getEntity());
@@ -167,5 +156,30 @@ class GallyRequestBuilder
             $currency,
             $this->contextProvider->getPriceFilterUnit()
         );
+    }
+
+    /**
+     * Get select sourceField from gally api
+     *
+     * @return SourceField[]
+     */
+    private function getSelectSourceField(Metadata $metadata): array
+    {
+
+        $cacheKey = 'gally_select_source_fields';
+        $cacheItem = $this->cache->getItem($cacheKey);
+
+        if (!$cacheItem->isHit()) {
+            $selectSourceFields = [];
+            foreach ($this->searchManager->getSelectSourceField($metadata) as $sourceField) {
+                $selectSourceFields[$sourceField->getCode()] = $sourceField->getCode();
+            }
+
+            $cacheItem->set($selectSourceFields);
+            $cacheItem->expiresAfter(3600);
+            $this->cache->save($cacheItem);
+        }
+
+        return $cacheItem->get();
     }
 }

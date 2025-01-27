@@ -19,6 +19,7 @@ use Doctrine\Common\Collections\Expr\CompositeExpression;
 use Doctrine\Common\Collections\Expr\Expression;
 use Doctrine\Common\Collections\Expr\ExpressionVisitor as BaseExpressionVisitor;
 use Doctrine\Common\Collections\Expr\Value;
+use Gally\Sdk\Entity\SourceField;
 use Gally\Sdk\GraphQl\Request;
 use Oro\Bundle\ProductBundle\Entity\Product;
 use Oro\Bundle\SearchBundle\Query\Criteria\Criteria;
@@ -27,12 +28,19 @@ use Oro\Bundle\VisibilityBundle\Entity\VisibilityResolved\BaseVisibilityResolved
 
 class ExpressionVisitor extends BaseExpressionVisitor
 {
+    /** @var SourceField[] */
+    private array $selectSourceFields = [];
+    private ?string $searchQuery = null;
+
     public function __construct(
         private array $attributeMapping,
     ) {
     }
 
-    private ?string $searchQuery = null;
+    public function setSelectSourceFields(array $selectSourceFields): void
+    {
+        $this->selectSourceFields = $selectSourceFields;
+    }
 
     public function dispatch(Expression $expr, bool $isStitchedQuery = false, bool $isMainQuery = true)
     {
@@ -123,7 +131,7 @@ class ExpressionVisitor extends BaseExpressionVisitor
             $type = 'text';
             $operator = Request::FILTER_OPERATOR_IN;
         } elseif ('category__id' === $field && Request::FILTER_OPERATOR_IN === $operator) {
-            // Category filter do not support in operator
+            // Category filter do not support "in" operator
             $value = array_map(
                 fn ($value) => $this->dispatch(new Comparison($field, '=', $value), $isStitchedQuery),
                 $value
@@ -146,6 +154,9 @@ class ExpressionVisitor extends BaseExpressionVisitor
                     : 'visible_for_customer';
                 $value = $customerId;
             }
+        } elseif (\array_key_exists($field, $this->selectSourceFields)) {
+            $field .= '__value';
+            $type = 'text';
         }
 
         if ('bool' === $type) {
