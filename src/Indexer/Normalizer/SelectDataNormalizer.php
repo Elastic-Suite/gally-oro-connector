@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Gally\OroPlugin\Indexer\Normalizer;
 
+use Gally\OroPlugin\Convertor\LocalizationConvertor;
 use Oro\Bundle\EntityBundle\ORM\DoctrineHelper;
 use Oro\Bundle\EntityExtendBundle\Entity\EnumValueTranslation;
 use Oro\Bundle\EntityExtendBundle\Form\Util\EnumTypeHelper;
@@ -73,10 +74,17 @@ class SelectDataNormalizer extends AbstractNormalizer
                 'objectClass' => $enumValueClassName,
                 'field' => 'name',
                 'foreignKey' => $optionCodes,
-                'locale' => $localization->getFormattingCode(),
+                'locale' => LocalizationConvertor::getLocaleFormattingCode($localization),
             ]);
             foreach ($translations as $translation) {
                 $this->translatedOptionsByField[$fieldName][$translation->getForeignKey()] = $translation->getContent();
+            }
+            $enumOptionRepo = $this->doctrineHelper->getEntityRepositoryForClass($enumValueClassName);
+            $fallbacks = $enumOptionRepo->findAll();
+            foreach ($fallbacks as $fallback) {
+                if (!isset($this->translatedOptionsByField[$fieldName][$fallback->getId()])) {
+                    $this->translatedOptionsByField[$fieldName][$fallback->getId()] = $fallback->getName();
+                }
             }
         }
     }

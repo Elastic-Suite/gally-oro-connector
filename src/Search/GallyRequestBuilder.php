@@ -159,13 +159,12 @@ class GallyRequestBuilder
     }
 
     /**
-     * Get select sourceField from gally api
+     * Get select sourceField from gally api.
      *
      * @return SourceField[]
      */
     private function getSelectSourceField(Metadata $metadata): array
     {
-
         $cacheKey = 'gally_select_source_fields';
         $cacheItem = $this->cache->getItem($cacheKey);
 

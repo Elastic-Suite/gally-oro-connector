@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace Gally\OroPlugin\Indexer;
 
 use Gally\OroPlugin\Config\ConfigManager;
-use Gally\OroPlugin\Convector\LocalizationConvector;
+use Gally\OroPlugin\Convertor\LocalizationConvertor;
 use Gally\OroPlugin\Entity\IndexBatchCount;
 use Gally\OroPlugin\Indexer\Event\BeforeSaveIndexDataEvent;
 use Gally\OroPlugin\Indexer\Provider\CatalogProvider;
@@ -276,7 +276,7 @@ class Indexer extends AbstractIndexer
         $websiteId = $context[self::CONTEXT_CURRENT_WEBSITE_ID_KEY];
         /** @var Localization $localization */
         $localization = $context[self::CONTEXT_LOCALIZATION];
-        $locale = LocalizationConvector::getLocaleFormattingCode($localization);
+        $locale = LocalizationConvertor::getLocaleFormattingCode($localization);
         $index = $this->indicesByLocale[$websiteId][$entityClass][$locale] ?? null;
 
         if (!$index) {

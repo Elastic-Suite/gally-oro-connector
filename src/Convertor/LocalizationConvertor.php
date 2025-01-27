@@ -12,11 +12,11 @@
 
 declare(strict_types=1);
 
-namespace Gally\OroPlugin\Convector;
+namespace Gally\OroPlugin\Convertor;
 
 use Oro\Bundle\LocaleBundle\Entity\Localization;
 
-class LocalizationConvector
+class LocalizationConvertor
 {
     public static function getLocaleFormattingCode(Localization $localization): string
     {

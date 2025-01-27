@@ -47,7 +47,7 @@ class ExpressionVisitorTest extends WebTestCase
                     SourceField::TYPE_SELECT,
                     'Brand',
                     [],
-                )
+                ),
             ]
         );
         self::assertSame($gallyFilters, $exprVisitor->dispatch($expr));
@@ -266,7 +266,7 @@ class ExpressionVisitorTest extends WebTestCase
                     SourceField::TYPE_SELECT,
                     'Brand',
                     [],
-                )
+                ),
             ]
         );
         self::assertSame($gallyFilters, $exprVisitor->dispatch($expr, true));
@@ -359,7 +359,7 @@ class ExpressionVisitorTest extends WebTestCase
         ];
         yield [
             new Comparison('integer.brand', '=', 1234),
-            ['brand__value' => ['eq' => "1234"]],
+            ['brand__value' => ['eq' => '1234']],
         ];
         yield [
             new CompositeExpression(

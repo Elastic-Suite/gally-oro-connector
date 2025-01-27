@@ -16,7 +16,7 @@ namespace Gally\OroPlugin\Indexer\Provider;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Gally\OroPlugin\Config\ConfigManager;
-use Gally\OroPlugin\Convector\LocalizationConvector;
+use Gally\OroPlugin\Convertor\LocalizationConvertor;
 use Gally\Sdk\Entity\Catalog;
 use Gally\Sdk\Entity\LocalizedCatalog;
 use Oro\Bundle\LocaleBundle\Entity\Localization;
@@ -82,7 +82,7 @@ class CatalogProvider implements ProviderInterface
             $this->catalogCache[$website->getId()],
             'website_' . $website->getId() . '_' . $localization->getFormattingCode(),
             $localization->getName(),
-            LocalizationConvector::getLocaleFormattingCode($localization),
+            LocalizationConvertor::getLocaleFormattingCode($localization),
             $this->currencyProvider->getWebsiteDefaultCurrency($website->getId())
         );
     }
