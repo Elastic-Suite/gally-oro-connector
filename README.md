@@ -10,11 +10,7 @@ composer require gally/oro-plugin:dev-master
 
 ## Usage
 
-- Define the website_search dsn in your environment vars.
-    ```shell
-    # Example
-    ORO_WEBSITE_SEARCH_ENGINE_DSN=gally://admin\@example.com:apassword@api.gally.local:443?prefix=oro_website_search
-    ```
+- In oro backend, you can enable gally and add credentials from configuration screen.
 - Run this command to sync your catalog structure with Gally :
     ```shell
         bin/console gally:structure-sync # Sync catalog and source field data with gally
