@@ -33,6 +33,8 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 class SearchEngine extends AbstractEngine
 {
     public const ENGINE_NAME = 'gally';
+    // We need to identifier filter that come from aggregation in other to "hide" other filter in a boolFilter
+    public const GALLY_FILTER_PREFIX = 'gally__';
 
     protected Mapper $mapper;
 
@@ -101,7 +103,7 @@ class SearchEngine extends AbstractEngine
 
         $aggregations = [];
         foreach ($response->getAggregations() as $aggregation) {
-            $field = $aggregation['field'];
+            $field = self::GALLY_FILTER_PREFIX . $aggregation['field'];
             foreach ($aggregation['options'] as $option) {
                 $aggregations[$field][$option['value']] = $option['count'];
             }

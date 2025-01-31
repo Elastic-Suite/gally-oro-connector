@@ -82,7 +82,7 @@ class GallyDataGridExtension extends AbstractExtension
 
         foreach ($filterableSourceField as $sourceField) {
             if (!\in_array($sourceField->getCode(), $proceed, true)) {
-                $fieldName = $sourceField->getCode();
+                $fieldName = SearchEngine::GALLY_FILTER_PREFIX . $sourceField->getCode();
                 $type = null;
                 $filter = [
                     'label' => $sourceField->getDefaultLabel(),
@@ -192,6 +192,7 @@ class GallyDataGridExtension extends AbstractExtension
         }
 
         foreach ($gallyFilters as $gallyFilter) {
+            $gallyFilter['field'] = SearchEngine::GALLY_FILTER_PREFIX . $gallyFilter['field'];
             $filter = [
                 'data_name' => $gallyFilter['field'],
                 'label' => $gallyFilter['label'],

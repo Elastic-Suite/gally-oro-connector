@@ -135,7 +135,26 @@ class GallyRequestBuilder
             $filters = $this->expressionVisitor->dispatch($expression, 'product' === $metadata->getEntity());
         }
 
-        return [$this->expressionVisitor->getSearchQuery(), array_filter([$filters])];
+        if (!\array_key_exists('facetFilters', $filters)) {
+            $filters['facetFilters'] = [];
+        }
+
+        if (\array_key_exists('queryFilters', $filters) && !empty($filters['queryFilters'])) {
+            $queryFilters = [];
+            foreach ($filters['queryFilters'] as $field => $queryFilter) {
+                if (\is_string($field)) {
+                    $queryFilters[] = [$field => $queryFilter];
+                } else {
+                    $queryFilters[] = $queryFilter;
+                }
+            }
+            $filters['facetFilters'] = [
+                [Request::FILTER_TYPE_BOOLEAN => ['_must' => $queryFilters]],
+            ];
+        }
+
+        return [
+            $this->expressionVisitor->getSearchQuery(), array_filter($filters['facetFilters'])];
     }
 
     private function getPriceGroup(): string
