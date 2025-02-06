@@ -23,7 +23,6 @@ use Gally\Sdk\Entity\SourceField;
 use Gally\Sdk\GraphQl\Request;
 use Oro\Bundle\ProductBundle\Entity\Product;
 use Oro\Bundle\SearchBundle\Query\Criteria\Criteria;
-use Oro\Bundle\SearchBundle\Query\Query;
 use Oro\Bundle\VisibilityBundle\Entity\VisibilityResolved\BaseVisibilityResolved;
 
 class ExpressionVisitor extends BaseExpressionVisitor
@@ -136,13 +135,13 @@ class ExpressionVisitor extends BaseExpressionVisitor
                 $boolFilter = [
                     Request::FILTER_TYPE_BOOLEAN => [
                         $type => [
-                            count($filters['queryFilters']) > 1
+                            \count($filters['queryFilters']) > 1
                                 ? [Request::FILTER_TYPE_BOOLEAN => [$type => [$filters['queryFilters']]]]
                                 : $filters['queryFilters'],
-                            count($filters['facetFilters']) > 1
+                            \count($filters['facetFilters']) > 1
                                 ? [Request::FILTER_TYPE_BOOLEAN => [$type => $filters['facetFilters']]]
                                 : $filters['facetFilters'],
-                        ]
+                        ],
                     ],
                 ];
             }

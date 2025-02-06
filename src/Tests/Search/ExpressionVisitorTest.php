@@ -526,7 +526,7 @@ class ExpressionVisitorTest extends WebTestCase
                     ['rangeFilter' => ['field' => 'price__price', 'lte' => '20']],
                     ['rangeFilter' => ['field' => 'price__price', 'gte' => '10']],
                     ['rangeFilter' => ['field' => 'price__price', 'lte' => '20']],
-                ]
+                ],
             ],
         ];
     }
@@ -1045,20 +1045,20 @@ class ExpressionVisitorTest extends WebTestCase
                                     '_must' => [
                                         ['price__price' => ['gte' => 10.0]],
                                         ['price__price' => ['lte' => 20.0]],
-                                    ]
+                                    ],
                                 ],
                             ],
                             [
                                 'boolFilter' => [
                                     '_must' => [
                                         ['price__price' => ['gte' => 10.0]],
-                                        ['price__price' => ['lte' => 20.0]]
+                                        ['price__price' => ['lte' => 20.0]],
                                     ],
-                                ]
+                                ],
                             ],
-                        ]
+                        ],
                     ],
-                ]
+                ],
             ],
         ];
     }

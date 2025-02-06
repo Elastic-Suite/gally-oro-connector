@@ -35,7 +35,6 @@ class ProductIndexFieldsProvider implements ProductIndexAttributeProviderInterfa
 
     public function isForceIndexed(string $field): bool
     {
-        //        return true;
         return $this->contextProvider->isGallyContext() || $this->productIndexAttributeProvider->isForceIndexed($field);
     }
 }

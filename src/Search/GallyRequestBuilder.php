@@ -130,9 +130,10 @@ class GallyRequestBuilder
     {
         $filters = [];
         $this->expressionVisitor->setSelectSourceFields($selectSourceFields);
+        $isStitchedQuery = 'product' === $metadata->getEntity();
 
         if ($expression = $query->getCriteria()->getWhereExpression()) {
-            $filters = $this->expressionVisitor->dispatch($expression, 'product' === $metadata->getEntity()) ?? [];
+            $filters = $this->expressionVisitor->dispatch($expression, $isStitchedQuery) ?? [];
         }
 
         if (!\array_key_exists('facetFilters', $filters)) {
@@ -148,12 +149,15 @@ class GallyRequestBuilder
                     $queryFilters[] = $queryFilter;
                 }
             }
-            $filters['facetFilters'] = [
-                [Request::FILTER_TYPE_BOOLEAN => ['_must' => $queryFilters]],
-            ];
+
+            if ($isStitchedQuery) {
+                $filters['facetFilters'][Request::FILTER_TYPE_BOOLEAN] = ['_must' => $queryFilters];
+            } else {
+                $filters['facetFilters'][] = [Request::FILTER_TYPE_BOOLEAN => ['_must' => $queryFilters]];
+            }
         }
 
-        return [$this->expressionVisitor->getSearchQuery(), array_filter($filters['facetFilters'])];
+        return [$this->expressionVisitor->getSearchQuery(), [array_filter($filters['facetFilters'])]];
     }
 
     private function getPriceGroup(): string
