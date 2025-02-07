@@ -120,11 +120,32 @@ class ExpressionVisitor extends BaseExpressionVisitor
         }
 
         if (!$isMainQuery) {
-            $boolFilter = [
-                Request::FILTER_TYPE_BOOLEAN => [
-                    $type => array_merge($filters['queryFilters'] ?? [], $filters['facetFilters'] ?? []),
-                ],
-            ];
+            if (empty($filters['facetFilters'])) {
+                $boolFilter = [
+                    Request::FILTER_TYPE_BOOLEAN => [
+                        $type => $filters['queryFilters'] ?? [],
+                    ],
+                ];
+            } elseif (empty($filters['queryFilters'])) {
+                $boolFilter = [
+                    Request::FILTER_TYPE_BOOLEAN => [
+                        $type => $filters['facetFilters'],
+                    ],
+                ];
+            } else {
+                $boolFilter = [
+                    Request::FILTER_TYPE_BOOLEAN => [
+                        $type => [
+                            count($filters['queryFilters']) > 1
+                                ? [Request::FILTER_TYPE_BOOLEAN => [$type => [$filters['queryFilters']]]]
+                                : $filters['queryFilters'],
+                            count($filters['facetFilters']) > 1
+                                ? [Request::FILTER_TYPE_BOOLEAN => [$type => $filters['facetFilters']]]
+                                : $filters['facetFilters'],
+                        ]
+                    ],
+                ];
+            }
             $filters['queryFilters'] = $isStitchedQuery ? $boolFilter : [$boolFilter];
             $filters['facetFilters'] = [];
         }

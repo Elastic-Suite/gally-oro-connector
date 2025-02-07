@@ -202,7 +202,7 @@ class GallyDataGridExtension extends AbstractExtension
             ];
 
             if (Response::FILTER_TYPE_SLIDER === $gallyFilter['type']) {
-                $filter['type'] = 'price__price' === $gallyFilter['field'] ? 'frontend-product-price' : 'number-range';
+                $filter['type'] = (SearchEngine::GALLY_FILTER_PREFIX . 'price__price') === $gallyFilter['field'] ? 'frontend-product-price' : 'number-range';
                 $filters[$gallyFilter['field']] = $filter;
             } elseif (Response::FILTER_TYPE_BOOLEAN === $gallyFilter['type']) {
                 $filter['type'] = 'boolean';

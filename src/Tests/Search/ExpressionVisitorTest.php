@@ -494,6 +494,41 @@ class ExpressionVisitorTest extends WebTestCase
                 ],
             ],
         ];
+        yield [
+            new CompositeExpression(
+                'AND',
+                [
+                    new CompositeExpression(
+                        'AND',
+                        [
+                            new CompositeExpression(
+                                'AND',
+                                [
+                                    new CompositeExpression(
+                                        'AND',
+                                        [
+                                            new Comparison('all_text', 'CONTAINS', new Value('medical')),
+                                            new Comparison('decimal.gally__price__price', '>=', new Value(10)),
+                                        ],
+                                    ),
+                                    new Comparison('decimal.gally__price__price', '<=', new Value('20')),
+                                ],
+                            ),
+                            new Comparison('decimal.gally__price__price', '>=', new Value(10)),
+                        ],
+                    ),
+                    new Comparison('decimal.gally__price__price', '<=', new Value('20')),
+                ],
+            ),
+            [
+                'facetFilters' => [
+                    ['rangeFilter' => ['field' => 'price__price', 'gte' => '10']],
+                    ['rangeFilter' => ['field' => 'price__price', 'lte' => '20']],
+                    ['rangeFilter' => ['field' => 'price__price', 'gte' => '10']],
+                    ['rangeFilter' => ['field' => 'price__price', 'lte' => '20']],
+                ]
+            ],
+        ];
     }
 
     /**
@@ -973,6 +1008,57 @@ class ExpressionVisitorTest extends WebTestCase
                     'status' => ['in' => ['enabled']],
                     'visibility_anonymous' => ['eq' => 1],
                 ],
+            ],
+        ];
+        yield [
+            new CompositeExpression(
+                'AND',
+                [
+                    new CompositeExpression(
+                        'AND',
+                        [
+                            new CompositeExpression(
+                                'AND',
+                                [
+                                    new CompositeExpression(
+                                        'AND',
+                                        [
+                                            new Comparison('all_text', 'CONTAINS', new Value('medical')),
+                                            new Comparison('decimal.gally__price__price', '>=', new Value(10)),
+                                        ],
+                                    ),
+                                    new Comparison('decimal.gally__price__price', '<=', new Value('20')),
+                                ],
+                            ),
+                            new Comparison('decimal.gally__price__price', '>=', new Value(10)),
+                        ],
+                    ),
+                    new Comparison('decimal.gally__price__price', '<=', new Value('20')),
+                ],
+            ),
+            [
+                'queryFilters' => [
+                    'boolFilter' => [
+                        '_must' => [
+                            [
+                                'boolFilter' => [
+                                    '_must' => [
+                                        ['price__price' => ['gte' => 10.0]],
+                                        ['price__price' => ['lte' => 20.0]],
+                                    ]
+                                ],
+                            ],
+                            [
+                                'boolFilter' => [
+                                    '_must' => [
+                                        ['price__price' => ['gte' => 10.0]],
+                                        ['price__price' => ['lte' => 20.0]]
+                                    ],
+                                ]
+                            ],
+                        ]
+                    ],
+                ]
             ],
         ];
     }
