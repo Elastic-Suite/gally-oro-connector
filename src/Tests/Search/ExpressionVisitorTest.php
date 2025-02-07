@@ -491,8 +491,8 @@ class ExpressionVisitorTest extends WebTestCase
                     ['equalFilter' => ['field' => 'is_variant', 'eq' => '0']],
                     ['equalFilter' => ['field' => 'status', 'in' => ['enabled']]],
                     ['equalFilter' => ['field' => 'visibility_anonymous', 'eq' => '1']],
-                ]
-            ]
+                ],
+            ],
         ];
     }
 
@@ -972,8 +972,8 @@ class ExpressionVisitorTest extends WebTestCase
                     ],
                     'status' => ['in' => ['enabled']],
                     'visibility_anonymous' => ['eq' => 1],
-                ]
-            ]
+                ],
+            ],
         ];
     }
 }

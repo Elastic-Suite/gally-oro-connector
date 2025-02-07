@@ -1,8 +1,6 @@
 Oro\Bundle\WebCatalogBundle\Entity\ContentNode:
     alias: oro_content_node_WEBSITE_ID
     fields:
-        - name: id
-          type: text
         - name: parentId
           type: text
         - name: path
@@ -24,13 +22,3 @@ Oro\Bundle\ProductBundle\Entity\Product:
           type: text
         - name: hidden_for_customer
           type: text
-
-Oro\Bundle\ProductBundle\Entity\Brand:
-    fields:
-        - name: id
-          type: integer
-          
-Oro\Bundle\WebsiteSearchSuggestionBundle\Entity\Suggestion:
-    fields:
-        - name: id
-          type: integer

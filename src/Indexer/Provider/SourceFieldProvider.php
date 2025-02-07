@@ -71,6 +71,8 @@ class SourceFieldProvider implements ProviderInterface
             $metadata = $this->getMetadataFromEntityClass($entityClass);
             $entityConfig = $this->mappingProvider->getEntityConfig($entityClass);
 
+            yield new SourceField($metadata, 'id', 'text', 'Id', [], true);
+
             foreach ($entityConfig['fields'] as $fieldData) {
                 if (\in_array($fieldData['name'], $this->fieldToSkip, true)) {
                     continue;
