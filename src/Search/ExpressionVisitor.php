@@ -45,6 +45,19 @@ class ExpressionVisitor extends BaseExpressionVisitor
         $this->selectSourceFields = $selectSourceFields;
     }
 
+    /**
+     * @param Expression $expr            composite expression to convert
+     * @param bool       $isStitchedQuery define is the converted query should stitch or not
+     * @param bool       $isMainQuery     define is the current composite expression is part of the main query
+     *                                    The main query are all clauses that can be grouped in one AND clause.
+     *                                    For example:
+     *                                    the query "A AND (B AND (C AND (D OR E)))" can be factorized in
+     *                                    "(A AND B AND C) AND (D OR E)". The main query is (A AND B AND C).
+     *                                    The main query will determine which clause can be added at the root
+     *                                    of the Gally request, without encapsulate it in a boolFilter query.
+     *
+     * @return array|string A gally format query
+     */
     public function dispatch(
         Expression $expr,
         bool $isStitchedQuery = false,
@@ -70,23 +83,27 @@ class ExpressionVisitor extends BaseExpressionVisitor
     ): array {
         $type = self::GALLY_TYPE_AND;
         if (CompositeExpression::TYPE_AND !== $expr->getType()) {
+            // Composite expression with OR operator need to be encapsulated in a boolFilter query
             $isMainQuery = false;
             $type = self::GALLY_TYPE_OR;
         }
 
+        // Convert each expression of the composite expression in a gally filter format.
         $filters = [];
-        foreach (['queryFilters', 'facetFilters'] as $filterType) {
-            foreach ($expr->getExpressionList() as $expression) {
-                $exprFilters = $this->dispatch($expression, $isStitchedQuery, $isMainQuery);
+        foreach ($expr->getExpressionList() as $expression) {
+            $exprFilters = $this->dispatch($expression, $isStitchedQuery, $isMainQuery);
+            foreach (['queryFilters', 'facetFilters'] as $filterType) {
                 if ($isStitchedQuery) {
                     foreach ($exprFilters[$filterType] ?? [] as $field => $filter) {
                         if (\array_key_exists($field, $filters[$filterType] ?? [])) {
+                            // The field is already present in the filters list, we merge the value.
                             if (1 === \count($filters[$filterType][$field])) {
                                 $filters[$filterType][$field] = [$filters[$filterType][$field], $filter];
                             } else {
                                 $filters[$filterType][$field] = [...$filters[$filterType][$field], $filter];
                             }
                         } else {
+                            // The field is not present in the filers list yet, we add it.
                             $filters[$filterType][$field] = $filter;
                         }
                     }
@@ -96,10 +113,22 @@ class ExpressionVisitor extends BaseExpressionVisitor
                     }
                 }
             }
+        }
 
+        // Rationalize generated filter and encapsulate them in a boolFilter query if needed.
+        // There is multiple case where we need to encapsulate the queries :
+        //   - When there is multiple filter on the same field
+        //   - When the composite expression is not part of the main query (OR queries for example)
+        // But there are cases where we need to encapsulate queryFilters but not facetFilters.
+        $needEncapsulate = [
+            'queryFilters' => !$isMainQuery,
+            'facetFilters' => !$isMainQuery,
+        ];
+        foreach (['queryFilters', 'facetFilters'] as $filterType) {
             foreach ($filters[$filterType] ?? [] as $filterData) {
+                // We can't stitch multiple filter on the same field.
                 if (\count($filterData) > 1) {
-                    $isMainQuery = false; // We can't stitch multiple filter on the same field.
+                    $needEncapsulate[$filterType] = true;
                 }
             }
 
@@ -109,7 +138,7 @@ class ExpressionVisitor extends BaseExpressionVisitor
                     foreach ($filterData as $filterItem) {
                         $rationalizedFilters[] = \is_string($field) ? [$field => $filterItem] : $filterItem;
                     }
-                } elseif (\is_string($field) && $isMainQuery) {
+                } elseif (\is_string($field) && !$needEncapsulate[$filterType]) {
                     $rationalizedFilters[$field] = $filterData;
                 } else {
                     $rationalizedFilters[] = \is_string($field) ? [$field => $filterData] : $filterData;
@@ -118,20 +147,26 @@ class ExpressionVisitor extends BaseExpressionVisitor
             $filters[$filterType] = $rationalizedFilters;
         }
 
-        if (!$isMainQuery) {
+        // If the current composite expression is not in the main query,
+        // we should encapsulate it in a main boolFilter clause.
+        if (!empty(array_filter($needEncapsulate))) {
             if (empty($filters['facetFilters'])) {
                 $boolFilter = [
                     Request::FILTER_TYPE_BOOLEAN => [
                         $type => $filters['queryFilters'] ?? [],
                     ],
                 ];
+                $filters['queryFilters'] = $isStitchedQuery ? $boolFilter : [$boolFilter];
+                $filters['facetFilters'] = [];
             } elseif (empty($filters['queryFilters'])) {
                 $boolFilter = [
                     Request::FILTER_TYPE_BOOLEAN => [
                         $type => $filters['facetFilters'],
                     ],
                 ];
-            } else {
+                $filters['queryFilters'] = $isStitchedQuery ? $boolFilter : [$boolFilter];
+                $filters['facetFilters'] = [];
+            } elseif ($needEncapsulate['facetFilters']) {
                 $boolFilter = [
                     Request::FILTER_TYPE_BOOLEAN => [
                         $type => [
@@ -144,9 +179,12 @@ class ExpressionVisitor extends BaseExpressionVisitor
                         ],
                     ],
                 ];
+                $filters['queryFilters'] = $isStitchedQuery ? $boolFilter : [$boolFilter];
+                $filters['facetFilters'] = [];
+            } else {
+                $boolFilter = [Request::FILTER_TYPE_BOOLEAN => [$type => $filters['queryFilters']]];
+                $filters['queryFilters'] = $isStitchedQuery ? $boolFilter : [$boolFilter];
             }
-            $filters['queryFilters'] = $isStitchedQuery ? $boolFilter : [$boolFilter];
-            $filters['facetFilters'] = [];
         }
 
         return array_filter($filters);
@@ -159,8 +197,9 @@ class ExpressionVisitor extends BaseExpressionVisitor
         $operator = $this->getGallyOperator($comparison->getOperator());
         $hasNegation = str_starts_with($comparison->getOperator(), 'NOT') || \in_array($comparison->getOperator(), ['<>', 'NIN'], true);
 
+        // Gally can't manage all_text filter, it is redondant with the main "search" filter.
         if ('all_text' === $field) {
-            $this->searchQuery = $value;
+            $this->searchQuery = $this->enforceValueType('text', $value);
 
             return null;
         }
@@ -221,6 +260,8 @@ class ExpressionVisitor extends BaseExpressionVisitor
         }
 
         if ('bool' === $type) {
+            // If we have true and false value for a bool field,
+            // we only need to check if the field exist for the document.
             if (\is_array($value) && \count($value) > 1) {
                 $operator = Request::FILTER_OPERATOR_EXISTS;
                 $value = true;
@@ -259,7 +300,9 @@ class ExpressionVisitor extends BaseExpressionVisitor
     }
 
     /**
-     * @return array [string, string, bool]
+     * Remove oro type and gally prefix from field name.
+     *
+     * @return array [string, string, bool] the type, the field name and a boolean indicate if the filter come from facet or not
      */
     private function explodeFieldTypeName(string $field): array
     {

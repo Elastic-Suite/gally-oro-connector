@@ -537,6 +537,48 @@ class ExpressionVisitorTest extends WebTestCase
                 ],
             ],
         ];
+        yield [
+            new CompositeExpression(
+                'AND',
+                [
+                    new CompositeExpression(
+                        'AND',
+                        [
+                            new CompositeExpression(
+                                'AND',
+                                [
+                                    new Comparison('integer.is_variant', '=', new Value('0')),
+                                    new Comparison('integer.is_variant', '=', new Value('0')),
+                                ]
+                            ),
+                            new Comparison('gally__pim_923__value', 'IN', new Value('9461')),
+                        ]
+                    ),
+                    new CompositeExpression(
+                        'OR',
+                        [
+                            new Comparison('integer.is_variant', '=', new Value(0)),
+                        ]
+                    ),
+                ]
+            ),
+            [
+                'queryFilters' => [
+                    ['equalFilter' => ['field' => 'is_variant', 'eq' => '0']],
+                    ['equalFilter' => ['field' => 'is_variant', 'eq' => '0']],
+                    [
+                        'boolFilter' => [
+                            '_should' => [
+                                ['equalFilter' => ['field' => 'is_variant', 'eq' => '0']],
+                            ],
+                        ],
+                    ],
+                ],
+                'facetFilters' => [
+                    ['equalFilter' => ['field' => 'pim_923__value', 'in' => '9461']],
+                ],
+            ],
+        ];
     }
 
     /**
@@ -1066,6 +1108,58 @@ class ExpressionVisitorTest extends WebTestCase
                             ],
                         ],
                     ],
+                ],
+            ],
+        ];
+        yield [
+            new CompositeExpression(
+                'AND',
+                [
+                    new CompositeExpression(
+                        'AND',
+                        [
+                            new CompositeExpression(
+                                'AND',
+                                [
+                                    new Comparison('integer.is_variant', '=', new Value('0')),
+                                    new Comparison('integer.is_variant', '=', new Value('0')),
+                                ]
+                            ),
+                            new Comparison('gally__pim_923__value', 'IN', new Value('9461')),
+                        ]
+                    ),
+                    new CompositeExpression(
+                        'OR',
+                        [
+                            new Comparison('integer.is_variant', '=', new Value(0)),
+                        ]
+                    ),
+                ]
+            ),
+            [
+                'queryFilters' => [
+                    'boolFilter' => [
+                        '_must' => [
+                            [
+                                'boolFilter' => [
+                                    '_must' => [
+                                        ['is_variant' => ['eq' => 0]],
+                                        ['is_variant' => ['eq' => 0]],
+                                    ],
+                                ],
+                            ],
+                            [
+                                'boolFilter' => [
+                                    '_should' => [
+                                        ['is_variant' => ['eq' => 0]],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+                'facetFilters' => [
+                    'pim_923__value' => ['in' => '9461'],
                 ],
             ],
         ];

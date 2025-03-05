@@ -28,7 +28,7 @@ class LocalizationConvertor
 
         $code = $localization->getParentLocalization()?->getFormattingCode();
 
-        if (preg_match($pattern, $code)) {
+        if ($code && preg_match($pattern, $code)) {
             return $code;
         }
 

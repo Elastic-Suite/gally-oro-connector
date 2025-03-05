@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Gally\OroPlugin\Controller\Frontend;
 
 use Gally\OroPlugin\Search\GallyRequestBuilder;
+use Gally\OroPlugin\Search\SearchEngine;
 use Gally\Sdk\GraphQl\Request as SearchRequest;
 use Gally\Sdk\Service\SearchManager;
 use Oro\Bundle\DataGridBundle\Datagrid;
@@ -49,9 +50,11 @@ class ViewMoreController extends AbstractController
      */
     public function getDataAction(Request $request): JsonResponse
     {
+        $field = str_replace(SearchEngine::GALLY_FILTER_PREFIX, '', $request->query->get('field'));
+
         $options = $this->searchManager->viewMoreProductFilterOption(
             $this->getSearchRequest(),
-            $request->query->get('field')
+            $field
         );
 
         return new JsonResponse($options);
