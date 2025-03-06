@@ -22,6 +22,7 @@ use Doctrine\Common\Collections\Expr\Value;
 use Gally\Sdk\Entity\SourceField;
 use Gally\Sdk\GraphQl\Request;
 use Oro\Bundle\ProductBundle\Entity\Product;
+use Oro\Bundle\SearchBundle\Query\Criteria\Comparison as OroComparison;
 use Oro\Bundle\SearchBundle\Query\Criteria\Criteria;
 use Oro\Bundle\VisibilityBundle\Entity\VisibilityResolved\BaseVisibilityResolved;
 
@@ -324,13 +325,19 @@ class ExpressionVisitor extends BaseExpressionVisitor
     private function getGallyOperator(string $operator): string
     {
         return match ($operator) {
-            'IN', 'NOT IN', 'NIN' => Request::FILTER_OPERATOR_IN,
-            'LIKE', 'NOT LIKE' => Request::FILTER_OPERATOR_MATCH,
-            'EXISTS', 'NOT EXISTS' => Request::FILTER_OPERATOR_EXISTS,
-            '>' => Request::FILTER_OPERATOR_GT,
-            '>=' => Request::FILTER_OPERATOR_GTE,
-            '<' => Request::FILTER_OPERATOR_LT,
-            '<=' => Request::FILTER_OPERATOR_LTE,
+            OroComparison::LT => Request::FILTER_OPERATOR_LT,
+            OroComparison::LTE => Request::FILTER_OPERATOR_LTE,
+            OroComparison::GT => Request::FILTER_OPERATOR_GT,
+            OroComparison::GTE => Request::FILTER_OPERATOR_GTE,
+            OroComparison::IN,
+            'NOT ' . OroComparison::IN,
+            OroComparison::NIN => Request::FILTER_OPERATOR_IN,
+            OroComparison::LIKE,
+            OroComparison::NOT_LIKE,
+            OroComparison::CONTAINS,
+            OroComparison::NOT_CONTAINS => Request::FILTER_OPERATOR_MATCH,
+            OroComparison::EXISTS,
+            OroComparison::NOT_EXISTS => Request::FILTER_OPERATOR_EXISTS,
             default => Request::FILTER_OPERATOR_EQ,
         };
     }

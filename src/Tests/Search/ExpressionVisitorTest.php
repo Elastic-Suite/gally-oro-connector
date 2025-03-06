@@ -64,7 +64,7 @@ class ExpressionVisitorTest extends WebTestCase
             ],
         ];
         yield [
-            new Comparison('type', 'NIN', new Value(['configurable', 'kit'])),
+            new Comparison('type', 'NOT IN', new Value(['configurable', 'kit'])),
             [
                 'queryFilters' => [
                     ['boolFilter' => ['_not' => [['equalFilter' => ['field' => 'type', 'in' => ['configurable', 'kit']]]]]],
@@ -140,7 +140,7 @@ class ExpressionVisitorTest extends WebTestCase
             ],
         ];
         yield [
-            new Comparison('category__id', 'NOT IN', new Value([1, 2, 3])),
+            new Comparison('category__id', 'NIN', new Value([1, 2, 3])),
             [
                 'queryFilters' => [
                     ['boolFilter' => ['_not' => [['equalFilter' => ['field' => 'category__id', 'eq' => '1']]]]],
@@ -680,7 +680,7 @@ class ExpressionVisitorTest extends WebTestCase
             ],
         ];
         yield [
-            new Comparison('category__id', 'NOT IN', new Value([4, 5, 6])),
+            new Comparison('category__id', 'NIN', new Value([4, 5, 6])),
             [
                 'queryFilters' => [
                     'boolFilter' => [
