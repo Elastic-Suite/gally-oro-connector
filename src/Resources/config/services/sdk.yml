@@ -1,4 +1,9 @@
 services:
+    Gally\Sdk\Client\TokenCacheManagerInterface:
+        class: Gally\OroPlugin\Config\TokenCacheManager
+        calls:
+            - [ setCache, [ '@oro.gally.cache' ] ]
+    
     Gally\Sdk\Client\Configuration:
         factory: ['\Gally\OroPlugin\Factory\ConfigurationFactory', 'create']
         lazy: true
@@ -8,11 +13,14 @@ services:
     Gally\Sdk\Service\StructureSynchonizer:
         arguments:
             - '@Gally\Sdk\Client\Configuration'
+            - '@Gally\Sdk\Client\TokenCacheManagerInterface'
 
     Gally\Sdk\Service\IndexOperation:
         arguments:
             - '@Gally\Sdk\Client\Configuration'
+            - '@Gally\Sdk\Client\TokenCacheManagerInterface'
 
     Gally\Sdk\Service\SearchManager:
         arguments:
             - '@Gally\Sdk\Client\Configuration'
+            - '@Gally\Sdk\Client\TokenCacheManagerInterface'

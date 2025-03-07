@@ -40,6 +40,13 @@ parameters:
         - brand_LOCALIZATION_ID            # Brand field is managed as a select
 
 services:
+    oro.gally.cache:
+        parent: oro.data.cache
+        arguments:
+            $defaultLifetime: 1800
+        tags:
+            - { name: 'cache.pool', namespace: 'gally_cache' }
+    
     Gally\OroPlugin\Config\ConfigManager:
         arguments:
             - '@doctrine'
