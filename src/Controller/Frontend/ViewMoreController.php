@@ -16,9 +16,9 @@ namespace Gally\OroPlugin\Controller\Frontend;
 
 use Gally\OroPlugin\Search\GallyRequestBuilder;
 use Gally\OroPlugin\Search\SearchEngine;
-use Gally\Sdk\GraphQl\Request as SearchRequest;
 use Gally\Sdk\Service\SearchManager;
 use Oro\Bundle\DataGridBundle\Datagrid;
+use Oro\Bundle\DataGridBundle\Datagrid\DatagridInterface;
 use Oro\Bundle\SearchBundle\Datagrid\Datasource\SearchDatasource;
 use Oro\Bundle\SecurityBundle\Annotation\AclAncestor;
 use Oro\Bundle\WebsiteSearchBundle\Event\BeforeSearchEvent;
@@ -31,8 +31,6 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class ViewMoreController extends AbstractController
 {
-    public const PRODUCT_SEARCH_DATAGRID = 'frontend-product-search-grid';
-
     public function __construct(
         private Datagrid\Manager $dataGridManager,
         private Datagrid\RequestParameterBagFactory $parameterBagFactory,
@@ -50,22 +48,9 @@ class ViewMoreController extends AbstractController
      */
     public function getDataAction(Request $request): JsonResponse
     {
+        $dataGridName = $request->query->get('gridName', 'frontend-product-search-grid');
         $field = str_replace(SearchEngine::GALLY_FILTER_PREFIX, '', $request->query->get('field'));
-
-        $options = $this->searchManager->viewMoreProductFilterOption(
-            $this->getSearchRequest(),
-            $field
-        );
-
-        return new JsonResponse($options);
-    }
-
-    private function getSearchRequest(): SearchRequest
-    {
-        $dataGrid = $this->dataGridManager->getDatagrid(
-            self::PRODUCT_SEARCH_DATAGRID,
-            $this->parameterBagFactory->fetchParameters(self::PRODUCT_SEARCH_DATAGRID)
-        );
+        $dataGrid = $this->getDataGrid($dataGridName);
 
         /** @var SearchDatasource $datasource */
         $datasource = $dataGrid->acceptDatasource()->getDatasource();
@@ -74,6 +59,27 @@ class ViewMoreController extends AbstractController
         $this->eventDispatcher->dispatch($event, BeforeSearchEvent::EVENT_NAME);
         $this->queryPlaceholderResolver->replace($event->getQuery());
 
-        return $this->requestBuilder->build($event->getQuery(), []);
+        $request = $this->requestBuilder->build($event->getQuery(), []);
+        $options = $this->searchManager->viewMoreProductFilterOption($request, $field);
+
+        return new JsonResponse($options);
+    }
+
+    /**
+     * Rebuild the data grid of the product list where the view more request come from.
+     */
+    protected function getDataGrid(string $dataGridName): DatagridInterface
+    {
+        $parameters = $this->buildDataGridParameters($dataGridName);
+
+        return $this->dataGridManager->getDatagrid($dataGridName, $parameters);
+    }
+
+    /**
+     * Build data grid parameters from request data.
+     */
+    protected function buildDataGridParameters(string $dataGridName): array
+    {
+        return $this->parameterBagFactory->fetchParameters($dataGridName);
     }
 }

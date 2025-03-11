@@ -7,6 +7,7 @@ define(function(require) {
     const MultiSelectFilter = require('oro/filter/multiselect-filter');
     const LoadingMaskView = require('oroui/js/app/views/loading-mask-view');
     const __ = require('orotranslation/js/translator');
+    const mediator = require('oroui/js/mediator');
 
     /**
      * Gally select filter: filter values as multiple select options and
@@ -33,28 +34,28 @@ define(function(require) {
         render: function() {
             GallyFilter.__super__.render.call(this);
 
-            // Defers the view more link rendering to be sure it is displayed after the filter options.
-            setTimeout(function () {
-                if (!this.showMoreLink) {
-                    const viewMoreLabel = __('gally.filter.showMore.label');
-                    this.showMoreLink = $('<a/>', {href: '#', html: viewMoreLabel, click: this.showMore.bind(this)});
-                    this.selectWidget.multiselect('open');
-                    this.selectWidget.getWidget().append(this.showMoreLink);
-                    if (!this.subview('loading')) {
-                        this.subview('loading', new LoadingMaskView({container: this.selectWidget.getWidget()}));
+            if (!this.showMoreLink) {
+                const viewMoreLabel = __('gally.filter.showMore.label');
+                this.showMoreLink = $('<a/>', {href: '#', html: viewMoreLabel, class: 'view-more', click: this.showMore.bind(this)});
+                this.selectWidget.getWidget().append(this.showMoreLink);
+                if (!this.subview('loading')) {
+                    this.subview('loading', new LoadingMaskView({container: this.selectWidget.getWidget()}));
+                }
+                this.$el.on('input', function(event) {
+                    if (event.target.value.length && this.custom_data.hasMore) {
+                        this.showMore();
                     }
-                    this.selectWidget.multiselect('close');
-                    this.showMoreLink.hide();
+                }.bind(this));
+            }
+
+            if (this.custom_data.hasMore) {
+                this.showMoreLink.show();
+                if (this.$el.find('.datagrid-manager-search input').val()) {
+                    this.showMore();
                 }
-
-                if (this.custom_data.hasMore) {
-                    this.showMoreLink.show();
-                } else {
-                    this.showMoreLink.hide();
-                }
-
-            }.bind(this), 100);
-
+            } else {
+                this.showMoreLink.hide();
+            }
         },
 
         onMetadataLoaded: function(metadata) {
@@ -110,24 +111,31 @@ define(function(require) {
         },
 
         showMore: function() {
-            this.subview('loading').show();
-            let urlParams = Object.fromEntries(new URLSearchParams(window.location.search));
-            urlParams['field'] = this.name;
+            this.custom_data.hasMore = false;
 
-            $.ajax({
-                url: routing.generate('gally_filter_view_more', urlParams),
-                method: 'GET',
-                success: function (response) {
-                    this.custom_data.hasMore = false;
-                    this.showMoreLink.hide();
-                    this._setChoices(response);
-                    this.render();
-                    this.subview('loading').hide();
-                }.bind(this),
-                error: function (xhr) {
-                    this.subview('loading').hide();
-                }.bind(this),
-            });
+            mediator.trigger(
+                'datagrid:call_with_collection',
+                function (collection) {
+                    this.subview('loading').show();
+                    let params = collection.getFetchData();
+                    params['gridName'] = collection.inputName;
+                    params['field'] = this.name;
+
+                    $.ajax({
+                        url: routing.generate('gally_filter_view_more', params),
+                        method: 'GET',
+                        success: function (response) {
+                            this.showMoreLink.hide();
+                            this._setChoices(response);
+                            this.render();
+                            this.subview('loading').hide();
+                        }.bind(this),
+                        error: function (xhr) {
+                            this.subview('loading').hide();
+                        }.bind(this),
+                    });
+                }.bind(this)
+            );
         }
     });
 

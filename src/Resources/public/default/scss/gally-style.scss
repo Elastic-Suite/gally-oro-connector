@@ -1,3 +1,13 @@
 .dropdown-menu.loading {
     position: absolute;
 }
+
+.filter-item .ui-multiselect-menu {
+    display: flex !important;
+    flex-direction: column;
+    .view-more {
+        padding-top: 10px;
+        order: 2;
+    }
+}
+

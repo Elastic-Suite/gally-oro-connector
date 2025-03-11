@@ -3,6 +3,7 @@ define(function(require, exports, module) {
 
     const _ = require('underscore');
     const BaseFilterManager = require('orofilter/js/filters-manager');
+    const mediator = require('oroui/js/mediator');
 
     /**
      * View that represents all grid filters
@@ -15,13 +16,22 @@ define(function(require, exports, module) {
      * @event updateFilter  on update data of specific filter
      * @event disableFilter on disable specific filter
      */
-    return BaseFilterManager.extend({
+    const GallyFilterManager = BaseFilterManager.extend({
+
+        /**
+         * Initialize filter list options
+         *
+         * @param {Object} options
+         */
+        initialize: function(options) {
+            GallyFilterManager.__super__.initialize.call(this, options);
+            this.listenTo(mediator, 'datagrid:call_with_collection', this.callWithCollection);
+        },
 
         /**
          * @param {orodatagrid.datagrid.Grid} grid
          */
         updateFilters: function(grid) {
-
             let metadataFilters = {};
             _.each(grid.metadata.filters, metadata => metadataFilters[metadata.name] = metadata);
 
@@ -40,6 +50,12 @@ define(function(require, exports, module) {
             }, this);
 
             this.checkFiltersVisibility();
+        },
+
+        callWithCollection: function(callback) {
+            callback(this.collection);
         }
     });
+
+    return GallyFilterManager;
 });
