@@ -65,6 +65,7 @@ class FrontendProductGridEventListener
         $gallyFilters = $this->contextProvider->getResponse()->getAggregations();
         $currentFilters = $config->offsetGetByPath('[filters][columns]') ?? [];
         $filters = [];
+        $expectedOrder = [];
 
         foreach ($currentFilters as $code => $filter) {
             if (\in_array($code, ['sku', 'names'], true) || 'gally-select' === $filter['type']) {
@@ -74,6 +75,7 @@ class FrontendProductGridEventListener
 
         foreach ($gallyFilters as $gallyFilter) {
             $gallyFilter['field'] = SearchEngine::GALLY_FILTER_PREFIX . $gallyFilter['field'];
+            $expectedOrder[] = $gallyFilter['field'];
             $filter = [
                 'data_name' => $gallyFilter['field'],
                 'label' => $gallyFilter['label'],
@@ -102,7 +104,21 @@ class FrontendProductGridEventListener
             }
         }
 
-        $config->offsetSetByPath('[filters][columns]', $filters);
+        // Order filters according to gally facet position.
+        $orderedFilters = [];
+        foreach ($expectedOrder as $field) {
+            if (isset($filters[$field])) {
+                $orderedFilters[$field] = $filters[$field];
+            }
+        }
+
+        foreach ($filters as $field => $filter) {
+            if (!isset($orderedFilters[$field])) {
+                $orderedFilters[$field] = $filter;
+            }
+        }
+
+        $config->offsetSetByPath('[filters][columns]', $orderedFilters);
     }
 
     /**
