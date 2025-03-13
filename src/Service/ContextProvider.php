@@ -21,14 +21,13 @@ use Gally\Sdk\GraphQl\Response;
 use Oro\Bundle\ConfigBundle\Config\ConfigManager;
 use Oro\Bundle\LocaleBundle\Entity\Localization;
 use Oro\Bundle\LocaleBundle\Helper\LocalizationHelper;
-use Oro\Bundle\WebCatalogBundle\Provider\RequestWebContentVariantProvider;
 use Oro\Bundle\WebsiteBundle\Entity\Website;
 use Oro\Bundle\WebsiteBundle\Manager\WebsiteManager;
-use Oro\Component\WebCatalog\Entity\ContentNodeInterface;
 
 class ContextProvider
 {
     private bool $isGallyContext = false;
+    private ?string $currentContentNodeId = null;
     private Request $request;
     private Response $response;
     private ?string $priceFilterUnit = null;
@@ -39,7 +38,6 @@ class ContextProvider
         private WebsiteManager $websiteManager,
         private LocalizationHelper $localizationHelper,
         private CatalogProvider $catalogProvider,
-        private RequestWebContentVariantProvider $requestWebContentVariantProvider,
     ) {
     }
 
@@ -71,12 +69,14 @@ class ContextProvider
         );
     }
 
-    public function getCurrentContentNode(): ?ContentNodeInterface
+    public function setCurrentContentNodeId(string $contentNodeId): void
     {
-        $contentVariant = $this->requestWebContentVariantProvider->getContentVariant();
-        $isCategoryNode = $contentVariant && \in_array($contentVariant->getType(), ['category_page', 'variant'], true);
+        $this->currentContentNodeId = $contentNodeId;
+    }
 
-        return $isCategoryNode ? $this->requestWebContentVariantProvider->getContentVariant()?->getNode() : null;
+    public function getCurrentContentNodeId(): ?string
+    {
+        return $this->currentContentNodeId;
     }
 
     public function getRequest(): Request

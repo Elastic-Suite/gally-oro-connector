@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Gally\OroPlugin\Search;
 
+use Doctrine\ORM\EntityManagerInterface;
 use Gally\OroPlugin\Resolver\PriceGroupResolver;
 use Gally\OroPlugin\Service\ContextProvider;
 use Gally\Sdk\Entity\Metadata;
@@ -25,6 +26,7 @@ use Oro\Bundle\PricingBundle\Placeholder\CurrencyPlaceholder;
 use Oro\Bundle\PricingBundle\Placeholder\PriceListIdPlaceholder;
 use Oro\Bundle\SearchBundle\Query\Criteria\Criteria;
 use Oro\Bundle\SearchBundle\Query\Query;
+use Oro\Bundle\WebCatalogBundle\Entity\ContentVariant;
 use Oro\Bundle\WebsiteSearchBundle\Placeholder\PlaceholderRegistry;
 use Psr\Cache\CacheItemPoolInterface;
 
@@ -35,6 +37,7 @@ class GallyRequestBuilder
         private ExpressionVisitor $expressionVisitor,
         private PriceGroupResolver $priceGroupResolver,
         private SearchManager $searchManager,
+        private EntityManagerInterface $entityManager,
         private PlaceholderRegistry $registry,
         private array $attributeMapping,
         private CacheItemPoolInterface $cache,
@@ -52,7 +55,11 @@ class GallyRequestBuilder
         [$currentPage, $pageSize] = $this->getPaginationInfo($query);
         [$sortField, $sortDirection] = $this->getSortInfo($query);
         [$searchQuery, $filters] = $this->getFilters($query, $metadata, $selectSourceFields);
-        $currentContentNode = $this->contextProvider->getCurrentContentNode();
+        $currentContentNodeId = $this->contextProvider->getCurrentContentNodeId();
+        if ($currentContentNodeId) {
+            $contentNodeRepository = $this->entityManager->getRepository(ContentVariant::class);
+            $currentContentNode = $contentNodeRepository->find($currentContentNodeId);
+        }
 
         return new Request(
             $this->contextProvider->getCurrentLocalizedCatalog(),
@@ -61,7 +68,7 @@ class GallyRequestBuilder
             $this->getSelectedFields($metadata, $query, $selectSourceFields),
             $currentPage,
             $pageSize,
-            $currentContentNode ? (string) $currentContentNode->getId() : null,
+            $currentContentNodeId ? (string) $currentContentNode->getNode()->getId() : null,
             $searchQuery,
             $filters,
             $sortField,

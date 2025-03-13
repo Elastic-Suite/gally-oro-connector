@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Gally\OroPlugin\Search\Extension;
 
 use Gally\OroPlugin\Search\SearchEngine;
+use Gally\OroPlugin\Service\ContextProvider;
 use Gally\Sdk\Entity\Metadata;
 use Gally\Sdk\Entity\SourceField;
 use Gally\Sdk\GraphQl\Request;
@@ -33,6 +34,7 @@ class GallyDataGridExtension extends AbstractExtension
     public function __construct(
         private EngineParameters $engineParameters,
         private SearchManager $searchManager,
+        private ContextProvider $contextProvider,
         private array $dataGridNames,
     ) {
     }
@@ -50,6 +52,7 @@ class GallyDataGridExtension extends AbstractExtension
 
     public function visitDatasource(DatagridConfiguration $config, DatasourceInterface $datasource): void
     {
+        $this->saveCurrentContentNodeId($config);
         $this->addFilterFieldsFromGallyConfiguration($config);
         $this->addSortFieldsFromGallyConfiguration($config);
     }
@@ -57,6 +60,13 @@ class GallyDataGridExtension extends AbstractExtension
     public function getPriority(): int
     {
         return 255;
+    }
+
+    private function saveCurrentContentNodeId(DatagridConfiguration $config): void
+    {
+        if ($this->parameters->has('categoryContentVariantId')) {
+            $this->contextProvider->setCurrentContentNodeId((string) $this->parameters->get('categoryContentVariantId'));
+        }
     }
 
     private function addFilterFieldsFromGallyConfiguration(DatagridConfiguration $config): void

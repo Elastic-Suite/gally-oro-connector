@@ -59,7 +59,6 @@ services:
             - '@oro_website.manager'
             - '@oro_locale.helper.localization'
             - '@Gally\OroPlugin\Indexer\Provider\CatalogProvider'
-            - '@oro_web_catalog.request_web_content_variant_provider'
 
     Gally\OroPlugin\Provider\SearchMappingProvider:
         arguments:

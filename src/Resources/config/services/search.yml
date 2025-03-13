@@ -23,6 +23,7 @@ services:
             - '@Gally\OroPlugin\Search\ExpressionVisitor'
             - '@Gally\OroPlugin\Resolver\PriceGroupResolver'
             - '@Gally\Sdk\Service\SearchManager'
+            - '@doctrine.orm.entity_manager'
             - '@oro_website_search.placeholder.registry'
             - '%gally_config.attribute_mapping%'
             - '@cache.app'
@@ -67,6 +68,7 @@ services:
         arguments:
             - '@oro_website_search.engine.parameters'
             - '@Gally\Sdk\Service\SearchManager'
+            - '@Gally\OroPlugin\Service\ContextProvider'
             - ['frontend-product-search-grid', 'frontend-catalog-allproducts-grid']
         tags:
             - { name: oro_datagrid.extension }

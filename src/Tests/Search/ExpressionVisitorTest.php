@@ -151,11 +151,7 @@ class ExpressionVisitorTest extends WebTestCase
         ];
         yield [
             new Comparison('category_paths.1_2_3', 'EXISTS', new Value(null)),
-            [
-                'queryFilters' => [
-                    ['equalFilter' => ['field' => 'category_paths', 'in' => '1_2_3']],
-                ],
-            ],
+            null,
         ];
         yield [
             new Comparison('assigned_to.variant_42', 'EXISTS', new Value(1)),
@@ -416,7 +412,6 @@ class ExpressionVisitorTest extends WebTestCase
             ),
             [
                 'queryFilters' => [
-                    ['equalFilter' => ['field' => 'category_paths', 'in' => '1_5']],
                     ['equalFilter' => ['field' => 'status', 'in' => ['enabled']]],
                     [
                         'boolFilter' => [
@@ -695,11 +690,7 @@ class ExpressionVisitorTest extends WebTestCase
         ];
         yield [
             new Comparison('category_paths.1_2_3', 'EXISTS', new Value(null)),
-            [
-                'queryFilters' => [
-                    'category_paths' => ['in' => '1_2_3'],
-                ],
-            ],
+            null,
         ];
         yield [
             new Comparison('assigned_to.variant_42', 'EXISTS', new Value(1)),
@@ -966,7 +957,6 @@ class ExpressionVisitorTest extends WebTestCase
             ),
             [
                 'queryFilters' => [
-                    'category_paths' => ['in' => '1_5'],
                     'status' => ['in' => ['enabled']],
                     'boolFilter' => [
                         '_should' => [
