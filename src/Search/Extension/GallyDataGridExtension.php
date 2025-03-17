@@ -132,6 +132,7 @@ class GallyDataGridExtension extends AbstractExtension
     private function addSortFieldsFromGallyConfiguration(DatagridConfiguration $config): void
     {
         $sortableAttributes = $this->searchManager->getProductSortingOptions();
+        $sortableAttributes = array_reverse($sortableAttributes);
 
         /** @var SourceField[] $sorters */
         $sorters = [];
@@ -177,5 +178,6 @@ class GallyDataGridExtension extends AbstractExtension
 
         // Let gally define default sort by.
         $config->offsetSetByPath(Configuration::DISABLE_DEFAULT_SORTING_PATH, false);
+        $config->offsetSetByPath(Configuration::MULTISORT_PATH, false);
     }
 }

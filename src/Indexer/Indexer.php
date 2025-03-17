@@ -247,7 +247,26 @@ class Indexer extends AbstractIndexer
 
     public function delete($entity, array $context = []): bool
     {
-        // Index deletion is managed by gally on install.
+        $entityIdsByClass = $this->filterEntityData($entity);
+        $websiteIds = $context['websiteIds'] ?? [];
+
+        if (empty($this->indicesByLocale) || empty($context['entityIds'])) {
+            return true;
+        }
+
+        foreach ($websiteIds as $websiteId) {
+            foreach ($entityIdsByClass as $entityClass => $entityIds) {
+                $indexes = $this->indicesByLocale[$websiteId][$entityClass] ?? [];
+                $batches = array_chunk($entityIds, $this->getBatchSize());
+
+                foreach ($indexes as $indexName) {
+                    foreach ($batches as $batch) {
+                        $this->indexOperation->deleteBulk($indexName, $batch);
+                    }
+                }
+            }
+        }
+
         return true;
     }
 
@@ -331,5 +350,23 @@ class Indexer extends AbstractIndexer
         $catalogCode = $this->catalogProvider->getCatalogCodeFromWebsiteId($websiteId);
 
         return $this->localizedCatalogByWebsite[$catalogCode];
+    }
+
+    private function filterEntityData(array|object $entities): array
+    {
+        $entityIdsByClass = [];
+        if (\is_object($entities)) {
+            $entities = [$entities];
+        }
+        foreach ($entities as $entity) {
+            $entityClass = $this->doctrineHelper->getEntityClass($entity);
+            if (!$this->mappingProvider->isClassSupported($entityClass)) {
+                continue;
+            }
+            $entityId = $this->doctrineHelper->getSingleEntityIdentifier($entity);
+            $entityIdsByClass[$entityClass][] = $entityId;
+        }
+
+        return $entityIdsByClass;
     }
 }

@@ -16,7 +16,6 @@ namespace Gally\OroPlugin\Search;
 
 use Gally\OroPlugin\Service\ContextProvider;
 use Gally\Sdk\Service\SearchManager;
-use Oro\Bundle\ProductBundle\Entity\Product;
 use Oro\Bundle\SearchBundle\Provider\AbstractSearchMappingProvider;
 use Oro\Bundle\SearchBundle\Query\Criteria\Criteria;
 use Oro\Bundle\SearchBundle\Query\Query;
@@ -72,11 +71,7 @@ class SearchEngine extends AbstractEngine
                 [$type, $name] = Criteria::explodeFieldTypeName($field);
                 $value = $item[$this->attributeMapping[$name] ?? $name] ?? null;
 
-                if (('inv_status' === $name || 'inventory_status' === $name) && isset($item['stock'])) {
-                    $value = $item['stock']['status']
-                        ? Product::INVENTORY_STATUS_IN_STOCK
-                        : Product::INVENTORY_STATUS_OUT_OF_STOCK;
-                } elseif ('minimal_price' === $name && isset($item['price'])) {
+                if ('minimal_price' === $name && isset($item['price'])) {
                     $value = $item['price'][0]['price'];
                 } elseif ('tree' !== $name && \is_array($value)) {
                     $valueIds = [];

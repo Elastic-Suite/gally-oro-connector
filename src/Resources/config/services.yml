@@ -22,6 +22,9 @@ parameters:
         - manually_added_to
         - category_path
         - category_paths
+        - inv_status
+        - inventory _status
+        - inv_qty
         - is_hide_configurable
         - is_show_single_variant
         - is_variant
@@ -34,9 +37,6 @@ parameters:
     gally_config.field_to_skip:
         - id                               # Id field will be automatically added @see \Gally\OroPlugin\Indexer\Provider\SourceFieldProvider::provide
         - visibility_customer.CUSTOMER_ID  # Field managed manually @see src/Resources/config/oro/website_search.yml
-        - inv_status                       # Field managed manually @see oro/src/packages/GallyPlugin/src/Engine/IndexDataProvider.php
-        - inventory_status                 # Field managed manually @see oro/src/packages/GallyPlugin/src/Engine/IndexDataProvider.php
-        - inv_qty                          # Field managed manually @see oro/src/packages/GallyPlugin/src/Engine/IndexDataProvider.php
         - brand_LOCALIZATION_ID            # Brand field is managed as a select
 
 services:

@@ -165,7 +165,7 @@ class ExpressionVisitorTest extends WebTestCase
             new Comparison('inv_status', 'IN', new Value(['out_of_stock'])),
             [
                 'queryFilters' => [
-                    ['equalFilter' => ['field' => 'stock__status', 'eq' => 'false']],
+                    ['equalFilter' => ['field' => 'inv_status', 'in' => ['out_of_stock']]],
                 ],
             ],
         ];
@@ -173,12 +173,12 @@ class ExpressionVisitorTest extends WebTestCase
             new Comparison('inv_status', 'IN', new Value(['in_stock'])),
             [
                 'queryFilters' => [
-                    ['equalFilter' => ['field' => 'stock__status', 'eq' => 'true']],
+                    ['equalFilter' => ['field' => 'inv_status', 'in' => ['in_stock']]],
                 ],
             ],
         ];
         yield [
-            new Comparison('gally__inv_status', 'IN', new Value(['in_stock'])),
+            new Comparison('gally__stock__status', 'IN', new Value(['in_stock'])),
             [
                 'facetFilters' => [
                     ['equalFilter' => ['field' => 'stock__status', 'eq' => 'true']],
@@ -186,7 +186,7 @@ class ExpressionVisitorTest extends WebTestCase
             ],
         ];
         yield [
-            new Comparison('inv_status', 'IN', new Value(['in_stock', 'out_of_stock'])),
+            new Comparison('gally__stock__status', 'IN', new Value(['in_stock', 'out_of_stock'])),
             null,
         ];
         yield [
@@ -493,6 +493,7 @@ class ExpressionVisitorTest extends WebTestCase
                     ['equalFilter' => ['field' => 'is_variant', 'eq' => '0']],
                     ['equalFilter' => ['field' => 'is_variant', 'eq' => '0']],
                     ['equalFilter' => ['field' => 'status', 'in' => ['enabled']]],
+                    ['equalFilter' => ['field' => 'inv_status', 'in' => ['in_stock', 'out_of_stock']]],
                     ['equalFilter' => ['field' => 'visibility_anonymous', 'eq' => '1']],
                 ],
             ],
@@ -704,7 +705,7 @@ class ExpressionVisitorTest extends WebTestCase
             new Comparison('inv_status', 'IN', new Value(['out_of_stock'])),
             [
                 'queryFilters' => [
-                    'stock__status' => ['eq' => false],
+                    'inv_status' => ['in' => ['out_of_stock']],
                 ],
             ],
         ];
@@ -712,12 +713,12 @@ class ExpressionVisitorTest extends WebTestCase
             new Comparison('inv_status', 'IN', new Value(['in_stock'])),
             [
                 'queryFilters' => [
-                    'stock__status' => ['eq' => true],
+                    'inv_status' => ['in' => ['in_stock']],
                 ],
             ],
         ];
         yield [
-            new Comparison('gally__inv_status', 'IN', new Value(['in_stock'])),
+            new Comparison('gally__stock__status', 'IN', new Value(['in_stock'])),
             [
                 'facetFilters' => [
                     'stock__status' => ['eq' => true],
@@ -725,7 +726,7 @@ class ExpressionVisitorTest extends WebTestCase
             ],
         ];
         yield [
-            new Comparison('inv_status', 'IN', new Value(['in_stock', 'out_of_stock'])),
+            new Comparison('gally__stock__status', 'IN', new Value(['in_stock', 'out_of_stock'])),
             null,
         ];
         yield [
@@ -1046,6 +1047,7 @@ class ExpressionVisitorTest extends WebTestCase
                         ],
                     ],
                     'status' => ['in' => ['enabled']],
+                    'inv_status' => ['in' => ['in_stock', 'out_of_stock']],
                     'visibility_anonymous' => ['eq' => 1],
                 ],
             ],
