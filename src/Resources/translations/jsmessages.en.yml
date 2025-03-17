@@ -1,0 +1,4 @@
+gally:
+    filter:
+        showMore:
+            label: "Show more"
