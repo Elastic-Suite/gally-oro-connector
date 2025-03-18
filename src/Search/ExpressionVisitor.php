@@ -205,11 +205,6 @@ class ExpressionVisitor extends BaseExpressionVisitor
             return null;
         }
 
-        // Gally manage current category context in a dedicated top level parameter.
-        if (str_starts_with($field, 'category_paths.')) {
-            return null;
-        }
-
         if ('id' === $field) {
             $type = 'text';
         } elseif ('stock__status' === $field) {
@@ -221,6 +216,10 @@ class ExpressionVisitor extends BaseExpressionVisitor
         } elseif (str_starts_with($field, 'assigned_to.') || str_starts_with($field, 'manually_added_to.')) {
             [$field, $variantId] = explode('.', $field);
             [$_, $value] = explode('_', $variantId);
+            $operator = Request::FILTER_OPERATOR_IN;
+        } elseif (str_starts_with($field, 'category_paths.')) {
+            [$field, $value] = explode('.', $field);
+            $type = 'text';
             $operator = Request::FILTER_OPERATOR_IN;
         } elseif ('category__id' === $field && Request::FILTER_OPERATOR_IN === $operator) {
             // Category filter do not support "in" operator

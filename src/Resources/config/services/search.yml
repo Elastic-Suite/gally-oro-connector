@@ -113,3 +113,15 @@ services:
             - '@router'
         tags:
             - { name: kernel.event_listener, event: Oro\Bundle\ProductBundle\Event\ProcessAutocompleteDataEvent, method: onProcessAutocompleteData }
+
+    # Disable native subcategory_filter grid extension to avoid having category path in query 
+    # that will break virtual categories   
+    oro_catalog.datagrid.subcategory_filter:
+        class: 'Gally\OroPlugin\Search\Extension\SubcategoryFilter'
+        public: false
+        arguments:
+            - '@oro_website_search.engine.parameters'
+            - '@form.factory'
+            - '@oro_filter.filter_utility'
+        tags:
+            - { name: oro_search.extension.search_filter.filter, type: subcategory }
