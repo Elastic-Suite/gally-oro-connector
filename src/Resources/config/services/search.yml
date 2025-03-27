@@ -70,6 +70,8 @@ services:
             - '@Gally\Sdk\Service\SearchManager'
             - '@Gally\OroPlugin\Service\ContextProvider'
             - ['frontend-product-search-grid', 'frontend-catalog-allproducts-grid']
+        calls:
+            - [ setCache, [ '@oro.gally.cache' ] ]
         tags:
             - { name: oro_datagrid.extension }
 
@@ -80,6 +82,12 @@ services:
             - ['frontend-product-search-grid', 'frontend-catalog-allproducts-grid']
         tags:
             - { name: kernel.event_listener, event: oro_datagrid.search_datasource.result.after, method: onResultAfter }
+
+    Gally\OroPlugin\Decorator\OroGridEventListener:
+        decorates: oro_product.datagrid.event_listener.frontend_product_grid
+        arguments:
+            - '@.inner'
+            - '@oro_website_search.engine.parameters'
 
     Gally\OroPlugin\Decorator\DisableNativeCategoryAutocomplete:
         decorates: oro_catalog.event_listener.search.add_category_to_product_autocomplete

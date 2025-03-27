@@ -25,18 +25,26 @@ use Oro\Bundle\DataGridBundle\Datasource\DatasourceInterface;
 use Oro\Bundle\DataGridBundle\Extension\AbstractExtension;
 use Oro\Bundle\DataGridBundle\Extension\Sorter\Configuration;
 use Oro\Bundle\SearchBundle\Engine\EngineParameters;
+use Symfony\Contracts\Cache\CacheInterface;
 
 /**
  * Adapt data grid for result managed by Gally.
  */
 class GallyDataGridExtension extends AbstractExtension
 {
+    private CacheInterface $cache;
+
     public function __construct(
         private EngineParameters $engineParameters,
         private SearchManager $searchManager,
         private ContextProvider $contextProvider,
         private array $dataGridNames,
     ) {
+    }
+
+    public function setCache(CacheInterface $cache): void
+    {
+        $this->cache = $cache;
     }
 
     public function addDataGridName(string $name): void
@@ -131,7 +139,7 @@ class GallyDataGridExtension extends AbstractExtension
 
     private function addSortFieldsFromGallyConfiguration(DatagridConfiguration $config): void
     {
-        $sortableAttributes = $this->searchManager->getProductSortingOptions();
+        $sortableAttributes = $this->getProductSortingOptions();
         $sortableAttributes = array_reverse($sortableAttributes);
 
         /** @var SourceField[] $sorters */
@@ -179,5 +187,13 @@ class GallyDataGridExtension extends AbstractExtension
         // Let gally define default sort by.
         $config->offsetSetByPath(Configuration::DISABLE_DEFAULT_SORTING_PATH, false);
         $config->offsetSetByPath(Configuration::MULTISORT_PATH, false);
+    }
+
+    private function getProductSortingOptions(): array
+    {
+        return $this->cache->get(
+            'gally_product_sorting_options',
+            [$this->searchManager, 'getProductSortingOptions']
+        );
     }
 }
