@@ -1,0 +1,5 @@
+system_configuration:
+    groups:
+        product_sorting:
+            description: gally.system_configuration.groups.notice.description
+            description_style: warning

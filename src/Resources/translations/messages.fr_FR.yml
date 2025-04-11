@@ -21,3 +21,8 @@ gally:
     filter:
         showMore:
             label: "Voir plus"
+    system_configuration:
+        groups:
+            notice:
+                description: 'Le tri des produits est géré par Gally. Toute configuration de tri dans cette section sera ignorée lorsque Gally est activé.'
+

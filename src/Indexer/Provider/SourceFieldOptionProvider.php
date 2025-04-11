@@ -18,16 +18,18 @@ use Doctrine\ORM\EntityManagerInterface;
 use Gally\OroPlugin\Config\ConfigManager;
 use Gally\Sdk\Entity\Label;
 use Gally\Sdk\Entity\LocalizedCatalog;
-use Gally\Sdk\Entity\SourceField;
 use Gally\Sdk\Entity\SourceFieldOption;
-use Oro\Bundle\EntityExtendBundle\Entity\AbstractEnumValue;
-use Oro\Bundle\EntityExtendBundle\Entity\EnumValueTranslation;
+use Oro\Bundle\EntityExtendBundle\Entity\EnumOption;
+use Oro\Bundle\EntityExtendBundle\Entity\EnumOptionTranslation;
 use Oro\Bundle\EntityExtendBundle\Form\Util\EnumTypeHelper;
-use Oro\Bundle\EntityExtendBundle\Tools\ExtendHelper;
 use Oro\Bundle\LocaleBundle\Model\LocaleSettings;
-use Oro\Bundle\ProductBundle\Entity\Product;
 use Oro\Bundle\SearchBundle\Provider\SearchMappingProvider;
 use Oro\Bundle\WebsiteBundle\Provider\AbstractWebsiteLocalizationProvider;
+
+use Gally\Sdk\Entity\SourceField;
+use Oro\Bundle\EntityExtendBundle\Entity\AbstractEnumValue;
+use Oro\Bundle\EntityExtendBundle\Tools\ExtendHelper;
+use Oro\Bundle\ProductBundle\Entity\Product;
 
 /**
  * Gally Catalog data provider.
@@ -74,6 +76,7 @@ class SourceFieldOptionProvider implements ProviderInterface
 
             $metadata = $this->sourceFieldProvider->getMetadataFromEntityClass($entityClass);
             $entityConfig = $this->mappingProvider->getEntityConfig($entityClass);
+            $enumValueRepo = $this->entityManager->getRepository(EnumOption::class);
 
             foreach ($entityConfig['fields'] as $fieldData) {
                 if (!str_ends_with($fieldData['name'], '_enum.ENUM_ID')) {
@@ -84,12 +87,10 @@ class SourceFieldOptionProvider implements ProviderInterface
                 $fieldName = $this->sourceFieldProvider->cleanFieldName($fieldData['name']);
                 $sourceField = new SourceField($metadata, $fieldName, '', '', []);
                 $enumCode = $this->enumTypeHelper->getEnumCode(Product::class, $fieldName);
-                $enumValueClassName = ExtendHelper::buildEnumValueClassName($enumCode);
-                $enumValueRepo = $this->entityManager->getRepository($enumValueClassName);
-                $labels = $this->getLabels($enumValueClassName);
+                $labels = $this->getLabels($enumCode);
 
-                /** @var AbstractEnumValue $value */
-                foreach ($enumValueRepo->findAll() as $value) {
+                /** @var EnumOption $value */
+                foreach ($enumValueRepo->findBy(['enumCode' => $enumCode]) as $value) {
                     yield new SourceFieldOption(
                         $sourceField,
                         (string) $value->getId(),
@@ -107,13 +108,19 @@ class SourceFieldOptionProvider implements ProviderInterface
     /**
      * @return Label[][]
      */
-    private function getLabels(string $objectClass): array
+    private function getLabels(string $enumCode): array
     {
-        $translationRepo = $this->entityManager->getRepository(EnumValueTranslation::class);
-        $translations = $translationRepo->findBy([
-            'objectClass' => $objectClass,
-            'field' => 'name',
-        ]);
+        $translationRepo = $this->entityManager->getRepository(EnumOptionTranslation::class);
+        
+        $qb = $translationRepo->createQueryBuilder('t')
+            ->where('t.field = :field')
+            ->andWhere('t.foreignKey LIKE :enumCode')
+            ->andWhere('t.objectClass = :objectClass')
+            ->setParameter('field', 'name')
+            ->setParameter('enumCode', $enumCode . '.%')
+            ->setParameter('objectClass', EnumOption::class);
+
+        $translations = $qb->getQuery()->getResult();
         $labels = [];
 
         foreach ($translations as $translation) {

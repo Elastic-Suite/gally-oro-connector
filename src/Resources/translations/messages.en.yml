@@ -21,3 +21,7 @@ gally:
     filter:
         showMore:
             label: "Show more"
+    system_configuration:
+        groups:
+            notice:
+                description: 'Product sorting is managed by Gally. Any sorting configuration in this section will be ignored when Gally is enabled.'

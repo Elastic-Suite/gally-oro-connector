@@ -14,8 +14,11 @@ declare(strict_types=1);
 
 namespace Gally\OroPlugin\Indexer\Normalizer;
 
+use Doctrine\ORM\EntityManagerInterface;
 use Gally\OroPlugin\Convertor\LocalizationConvertor;
 use Oro\Bundle\EntityBundle\ORM\DoctrineHelper;
+use Oro\Bundle\EntityExtendBundle\Entity\EnumOption;
+use Oro\Bundle\EntityExtendBundle\Entity\EnumOptionTranslation;
 use Oro\Bundle\EntityExtendBundle\Entity\EnumValueTranslation;
 use Oro\Bundle\EntityExtendBundle\Form\Util\EnumTypeHelper;
 use Oro\Bundle\EntityExtendBundle\Tools\ExtendHelper;
@@ -29,6 +32,7 @@ class SelectDataNormalizer extends AbstractNormalizer
     public function __construct(
         private DoctrineHelper $doctrineHelper,
         private EnumTypeHelper $enumTypeHelper,
+        private EntityManagerInterface $entityManager,
     ) {
     }
 
@@ -68,22 +72,26 @@ class SelectDataNormalizer extends AbstractNormalizer
         $this->translatedOptionsByField = [];
         foreach ($usedOptionsByField as $fieldName => $optionCodes) {
             $enumCode = $this->enumTypeHelper->getEnumCode($entityClass, $fieldName);
-            $enumValueClassName = ExtendHelper::buildEnumValueClassName($enumCode);
-            $translationRepo = $this->doctrineHelper->getEntityRepositoryForClass(EnumValueTranslation::class);
-            $translations = $translationRepo->findBy([
-                'objectClass' => $enumValueClassName,
-                'field' => 'name',
-                'foreignKey' => $optionCodes,
-                'locale' => LocalizationConvertor::getLocaleFormattingCode($localization),
-            ]);
-            foreach ($translations as $translation) {
-                $this->translatedOptionsByField[$fieldName][$translation->getForeignKey()] = $translation->getContent();
+            $translationRepo = $this->entityManager->getRepository(EnumOptionTranslation::class);
+
+            $qb = $translationRepo->createQueryBuilder('t')
+                ->where('t.field = :field')
+                ->andWhere('t.foreignKey LIKE :enumCode')
+                ->andWhere('t.objectClass = :objectClass')
+                ->andWhere('t.locale = :localeCode')
+                ->setParameter('field', 'name')
+                ->setParameter('enumCode', $enumCode . '.%')
+                ->setParameter('objectClass', EnumOption::class)
+                ->setParameter('localeCode', LocalizationConvertor::getLocaleFormattingCode($localization));
+            
+            foreach ($qb->getQuery()->getResult() as $translation) {
+                $code = str_replace($enumCode . '.', '', $translation->getForeignKey());
+                $this->translatedOptionsByField[$fieldName][$code] = $translation->getContent();
             }
-            $enumOptionRepo = $this->doctrineHelper->getEntityRepositoryForClass($enumValueClassName);
-            $fallbacks = $enumOptionRepo->findAll();
-            foreach ($fallbacks as $fallback) {
-                if (!isset($this->translatedOptionsByField[$fieldName][$fallback->getId()])) {
-                    $this->translatedOptionsByField[$fieldName][$fallback->getId()] = $fallback->getName();
+            $enumOptionRepo = $this->entityManager->getRepository(EnumOption::class);
+            foreach ($enumOptionRepo->findBy(['enumCode' => $enumCode]) as $fallback) {
+                if (!isset($this->translatedOptionsByField[$fieldName][$fallback->getInternalId()])) {
+                    $this->translatedOptionsByField[$fieldName][$fallback->getInternalId()] = $fallback->getName();
                 }
             }
         }
