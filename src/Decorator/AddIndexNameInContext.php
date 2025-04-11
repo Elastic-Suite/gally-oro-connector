@@ -34,7 +34,7 @@ class AddIndexNameInContext extends ReindexMessageGranularizer
     /**
      * {@inheritDoc}
      */
-    public function setChunkSize($chunkSize)
+    public function setChunkSize(int $chunkSize): void
     {
         $this->decorated->setChunkSize($chunkSize);
     }
@@ -42,7 +42,7 @@ class AddIndexNameInContext extends ReindexMessageGranularizer
     /**
      * {@inheritDoc}
      */
-    public function process($entities, array $websites, array $context): iterable
+    public function process($entities, array $websiteIds, array $context): iterable
     {
         // Add index names in queue message in order to be able to update existing index.
         if (!isset($context['indices_by_locale'])) {
@@ -51,7 +51,7 @@ class AddIndexNameInContext extends ReindexMessageGranularizer
 
         $messageCount = [];
         $childMessages = [];
-        foreach ($this->decorated->process($entities, $websites, $context) as $childMessage) {
+        foreach ($this->decorated->process($entities, $websiteIds, $context) as $childMessage) {
             $entityClass = reset($childMessage['class']);
 
             foreach ($childMessage['context']['websiteIds'] ?? [] as $websiteId) {

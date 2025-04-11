@@ -20,7 +20,7 @@ use Gally\Sdk\Service\SearchManager;
 use Oro\Bundle\DataGridBundle\Datagrid;
 use Oro\Bundle\DataGridBundle\Datagrid\DatagridInterface;
 use Oro\Bundle\SearchBundle\Datagrid\Datasource\SearchDatasource;
-use Oro\Bundle\SecurityBundle\Annotation\AclAncestor;
+use Oro\Bundle\SecurityBundle\Attribute\AclAncestor;
 use Oro\Bundle\WebsiteSearchBundle\Event\BeforeSearchEvent;
 use Oro\Bundle\WebsiteSearchBundle\Resolver\QueryPlaceholderResolverInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -41,11 +41,8 @@ class ViewMoreController extends AbstractController
     ) {
     }
 
-    /**
-     * @Route("/filter_view_more", name="gally_filter_view_more", methods={"GET"}, options={"expose"=true})
-     *
-     * @AclAncestor("oro_product_frontend_view")
-     */
+    #[Route('/filter_view_more', name: 'gally_filter_view_more', methods: ['GET'], options: ['expose' => true])]
+    #[AclAncestor(id: 'gally_filter_view_more')]
     public function getDataAction(Request $request): JsonResponse
     {
         $dataGridName = $request->query->get('gridName', 'frontend-product-search-grid');

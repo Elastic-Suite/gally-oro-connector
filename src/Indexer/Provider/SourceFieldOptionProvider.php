@@ -17,14 +17,10 @@ namespace Gally\OroPlugin\Indexer\Provider;
 use Doctrine\ORM\EntityManagerInterface;
 use Gally\Sdk\Entity\Label;
 use Gally\Sdk\Entity\LocalizedCatalog;
-use Gally\Sdk\Entity\SourceField;
 use Gally\Sdk\Entity\SourceFieldOption;
-use Oro\Bundle\EntityExtendBundle\Entity\AbstractEnumValue;
 use Oro\Bundle\EntityExtendBundle\Entity\EnumValueTranslation;
 use Oro\Bundle\EntityExtendBundle\Form\Util\EnumTypeHelper;
-use Oro\Bundle\EntityExtendBundle\Tools\ExtendHelper;
 use Oro\Bundle\LocaleBundle\Model\LocaleSettings;
-use Oro\Bundle\ProductBundle\Entity\Product;
 use Oro\Bundle\SearchBundle\Provider\SearchMappingProvider;
 use Oro\Bundle\WebsiteBundle\Provider\AbstractWebsiteLocalizationProvider;
 
@@ -68,6 +64,7 @@ class SourceFieldOptionProvider implements ProviderInterface
 
             $metadata = $this->sourceFieldProvider->getMetadataFromEntityClass($entityClass);
             $entityConfig = $this->mappingProvider->getEntityConfig($entityClass);
+//            $enumValueRepo = $this->entityManager->getRepository(EnumOption::class);
 
             foreach ($entityConfig['fields'] as $fieldData) {
                 if (!str_ends_with($fieldData['name'], '_enum.ENUM_ID')) {
@@ -75,23 +72,23 @@ class SourceFieldOptionProvider implements ProviderInterface
                     continue;
                 }
 
-                $fieldName = $this->sourceFieldProvider->cleanFieldName($fieldData['name']);
-                $sourceField = new SourceField($metadata, $fieldName, '', '', []);
-                $enumCode = $this->enumTypeHelper->getEnumCode(Product::class, $fieldName);
-                $enumValueClassName = ExtendHelper::buildEnumValueClassName($enumCode);
-                $enumValueRepo = $this->entityManager->getRepository($enumValueClassName);
-                $labels = $this->getLabels($enumValueClassName);
-
-                /** @var AbstractEnumValue $value */
-                foreach ($enumValueRepo->findAll() as $value) {
-                    yield new SourceFieldOption(
-                        $sourceField,
-                        (string) $value->getId(),
-                        $value->getPriority(),
-                        $value->getName(),
-                        $labels[$value->getId()] ?? [],
-                    );
-                }
+//                $fieldName = $this->sourceFieldProvider->cleanFieldName($fieldData['name']);
+//                $sourceField = new SourceField($metadata, $fieldName, '', '', []);
+//                $enumCode = $this->enumTypeHelper->getEnumCode(Product::class, $fieldName);
+//
+//
+//                $labels = $this->getLabels($enumValueClassName);
+//
+//                /** @var EnumOption $value */
+//                foreach ($enumValueRepo->findBy(['enum_code' => $enumCode]) as $value) {
+//                    yield new SourceFieldOption(
+//                        $sourceField,
+//                        (string) $value->getId(),
+//                        $value->getPriority(),
+//                        $value->getName(),
+//                        $labels[$value->getId()] ?? [],
+//                    );
+//                }
             }
         }
 

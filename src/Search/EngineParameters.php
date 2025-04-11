@@ -30,6 +30,7 @@ class EngineParameters extends BaseEngineParameters
     ) {
         $website = $contextProvider->getCurrentWebsite();
         $isGallyEnabled = $website && $configManager->isGallyEnabled($website->getId());
+        $isGallyEnabled = true; // Todo fix currentWebsite loading
         $dsn = $isGallyEnabled ? $configManager->getDsn() : $dsn;
         parent::__construct($dsn);
     }
