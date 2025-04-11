@@ -99,6 +99,12 @@ services:
         tags:
             - { name: oro_featuretogle.voter }
 
+    # Disable the native for sorting by inventory status in the product grid
+    oro_product_pro.datagrid.event_listener.sort_products_by_inventory_status:
+        class: Oro\Bundle\ProductProBundle\DataGrid\EventListener\SortProductsByInventoryStatusListener
+        arguments:
+            - '@oro_config.manager'
+
 imports:
     - { resource: services/sdk.yml }
     - { resource: services/indexer.yml }

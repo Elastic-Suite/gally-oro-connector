@@ -8,6 +8,7 @@ define(function(require) {
     const LoadingMaskView = require('oroui/js/app/views/loading-mask-view');
     const __ = require('orotranslation/js/translator');
     const mediator = require('oroui/js/mediator');
+    const GallyMultiSelectDecorator = require('gallyplugin/js/app/datafilter/gally-multiselect-decorator');
 
     /**
      * Gally select filter: filter values as multiple select options and
@@ -18,6 +19,8 @@ define(function(require) {
      * @extends oro.filter.MultiSelectFilter
      */
     const GallyFilter = MultiSelectFilter.extend({
+
+        MultiselectDecorator: GallyMultiSelectDecorator,
 
         custom_data: {},
 
@@ -31,36 +34,43 @@ define(function(require) {
         /**
          * @inheritdoc
          */
+        _initializeSelectWidget: function() {
+            this.widgetOptions = Object.assign({}, this.widgetOptions, {
+                showMoreButton: this.custom_data && this.custom_data.hasMore ? {
+                    label: __('gally.filter.showMore.label'),
+                    attr: {
+                        'class': 'btn btn--flat view-more'
+                    },
+                    onClick: this.showMore.bind(this)
+                } : null
+            });
+
+            return GallyFilter.__super__._initializeSelectWidget.call(this);
+        },
+
+        /**
+         * @inheritdoc
+         */
         render: function() {
             GallyFilter.__super__.render.call(this);
 
-            if (!this.showMoreLink) {
-                const viewMoreLabel = __('gally.filter.showMore.label');
-                this.showMoreLink = $('<a/>', {href: '#', html: viewMoreLabel, class: 'view-more', click: this.showMore.bind(this)});
-                this.selectWidget.getWidget().append(this.showMoreLink);
-                if (!this.subview('loading')) {
-                    this.subview('loading', new LoadingMaskView({container: this.selectWidget.getWidget()}));
-                }
-                this.$el.on('input', function(event) {
-                    if (event.target.value.length && this.custom_data.hasMore) {
-                        this.showMore();
-                    }
-                }.bind(this));
-                this.selectWidget.getWidget().on('input', function(event) {
-                    if (event.target.value.length && this.custom_data.hasMore) {
-                        this.showMore();
-                    }
-                }.bind(this));
+            if (!this.subview('loading')) {
+                this.subview('loading', new LoadingMaskView({container: this.selectWidget.getWidget()}));
             }
-
-            if (this.custom_data.hasMore) {
-                this.showMoreLink.show();
-                if (this.$el.find('.datagrid-manager-search input').val()) {
+            
+            this.$el.on('input', function(event) {
+                if (event.target.value.length && this.custom_data.hasMore) {
                     this.showMore();
                 }
-            } else {
-                this.showMoreLink.hide();
-            }
+            }.bind(this));
+            
+            this.selectWidget.getWidget().on('input', function(event) {
+                if (event.target.value.length && this.custom_data.hasMore) {
+                    this.showMore();
+                }
+            }.bind(this));
+
+            this.toggleVisibilityShowMoreButton();
         },
 
         onMetadataLoaded: function(metadata) {
@@ -87,7 +97,6 @@ define(function(require) {
 
             _.each(options, option => {
                 this.counts[option.value] = option.count;
-                // option.count = this.counts[option.value] || 0;
                 option.disabled = false;
                 if (option.count === 0 &&
                     !_.contains(data.selected.value, option.value)
@@ -115,6 +124,16 @@ define(function(require) {
             return data;
         },
 
+        toggleVisibilityShowMoreButton: function(hidden) {
+            if (hidden === void 0) {
+                hidden = !this.custom_data.hasMore;
+            }
+
+            if (this.selectWidget && this.selectWidget.toggleVisibilityShowMoreButton) {
+                this.selectWidget.toggleVisibilityShowMoreButton(hidden);
+            }
+        },
+
         showMore: function() {
             this.custom_data.hasMore = false;
 
@@ -130,7 +149,7 @@ define(function(require) {
                         url: routing.generate('gally_filter_view_more', params),
                         method: 'GET',
                         success: function (response) {
-                            this.showMoreLink.hide();
+                            this.toggleVisibilityShowMoreButton(true);
                             this._setChoices(response);
                             this.render();
                             this.subview('loading').hide();

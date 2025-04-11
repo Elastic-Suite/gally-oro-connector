@@ -66,27 +66,27 @@ class SelectDataNormalizer extends AbstractNormalizer
         }
 
         $this->translatedOptionsByField = [];
-        foreach ($usedOptionsByField as $fieldName => $optionCodes) {
-            $enumCode = $this->enumTypeHelper->getEnumCode($entityClass, $fieldName);
-            $enumValueClassName = ExtendHelper::buildEnumValueClassName($enumCode);
-            $translationRepo = $this->doctrineHelper->getEntityRepositoryForClass(EnumValueTranslation::class);
-            $translations = $translationRepo->findBy([
-                'objectClass' => $enumValueClassName,
-                'field' => 'name',
-                'foreignKey' => $optionCodes,
-                'locale' => LocalizationConvertor::getLocaleFormattingCode($localization),
-            ]);
-            foreach ($translations as $translation) {
-                $this->translatedOptionsByField[$fieldName][$translation->getForeignKey()] = $translation->getContent();
-            }
-            $enumOptionRepo = $this->doctrineHelper->getEntityRepositoryForClass($enumValueClassName);
-            $fallbacks = $enumOptionRepo->findAll();
-            foreach ($fallbacks as $fallback) {
-                if (!isset($this->translatedOptionsByField[$fieldName][$fallback->getId()])) {
-                    $this->translatedOptionsByField[$fieldName][$fallback->getId()] = $fallback->getName();
-                }
-            }
-        }
+    //        foreach ($usedOptionsByField as $fieldName => $optionCodes) {
+    //            $enumCode = $this->enumTypeHelper->getEnumCode($entityClass, $fieldName);
+    //            $enumValueClassName = ExtendHelper::buildEnumValueClassName($enumCode);
+    //            $translationRepo = $this->doctrineHelper->getEntityRepositoryForClass(EnumValueTranslation::class);
+    //            $translations = $translationRepo->findBy([
+    //                'objectClass' => $enumValueClassName,
+    //                'field' => 'name',
+    //                'foreignKey' => $optionCodes,
+    //                'locale' => LocalizationConvertor::getLocaleFormattingCode($localization),
+    //            ]);
+    //            foreach ($translations as $translation) {
+    //                $this->translatedOptionsByField[$fieldName][$translation->getForeignKey()] = $translation->getContent();
+    //            }
+    //            $enumOptionRepo = $this->doctrineHelper->getEntityRepositoryForClass($enumValueClassName);
+    //            $fallbacks = $enumOptionRepo->findAll();
+    //            foreach ($fallbacks as $fallback) {
+    //                if (!isset($this->translatedOptionsByField[$fieldName][$fallback->getId()])) {
+    //                    $this->translatedOptionsByField[$fieldName][$fallback->getId()] = $fallback->getName();
+    //                }
+    //            }
+    //        }
     }
 
     public function normalize(

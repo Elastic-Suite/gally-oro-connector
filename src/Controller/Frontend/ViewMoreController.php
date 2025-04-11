@@ -20,12 +20,14 @@ use Gally\Sdk\Service\SearchManager;
 use Oro\Bundle\DataGridBundle\Datagrid;
 use Oro\Bundle\DataGridBundle\Datagrid\DatagridInterface;
 use Oro\Bundle\SearchBundle\Datagrid\Datasource\SearchDatasource;
+use Oro\Bundle\SecurityBundle\Attribute\AclAncestor;
 use Oro\Bundle\WebsiteSearchBundle\Event\BeforeSearchEvent;
 use Oro\Bundle\WebsiteSearchBundle\Resolver\QueryPlaceholderResolverInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Attribute\Route;
 
 class ViewMoreController extends AbstractController
 {
@@ -41,7 +43,9 @@ class ViewMoreController extends AbstractController
     ) {
     }
 
-    protected function buildResponse(Request $request): JsonResponse
+    #[Route('/filter_view_more', name: 'gally_filter_view_more', methods: ['GET'], options: ['expose' => true])]
+    #[AclAncestor(id: 'gally_filter_view_more')]
+    public function getDataAction(Request $request): JsonResponse
     {
         $dataGridName = $request->query->get('gridName', 'frontend-product-search-grid');
         $field = str_replace(SearchEngine::GALLY_FILTER_PREFIX, '', $request->query->get('field'));
