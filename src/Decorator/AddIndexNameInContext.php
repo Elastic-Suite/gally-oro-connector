@@ -23,20 +23,13 @@ use Oro\Bundle\WebsiteSearchBundle\Engine\Context\ContextTrait;
  */
 class AddIndexNameInContext extends ReindexMessageGranularizer
 {
+    use AddIndexNameInContextTrait;
     use ContextTrait;
 
     public function __construct(
         private ReindexMessageGranularizer $decorated,
         private IndexRegistry $indexRegistry,
     ) {
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function setChunkSize($chunkSize)
-    {
-        $this->decorated->setChunkSize($chunkSize);
     }
 
     /**

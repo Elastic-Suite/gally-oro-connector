@@ -2,7 +2,8 @@
     position: absolute;
 }
 
-.filter-item .ui-multiselect-menu {
+.filter-item .ui-multiselect-menu,
+.filter-default.dropdown-menu {
     display: flex !important;
     flex-direction: column;
     .view-more {

@@ -186,7 +186,7 @@ class Indexer extends AbstractIndexer
          *  That's why we use the variable $this->isFullContext, this variable is set before the dispatch of the reindex in several messages.
          */
         if (empty($contextEntityIds) || $this->isFullContext) {
-            foreach ($this->indicesByLocale[$websiteId][$entityClass] as $index) {
+            foreach ($this->indicesByLocale[$websiteId][$entityClass] ?? [] as $index) {
                 $this->installIndex($index);
             }
         }

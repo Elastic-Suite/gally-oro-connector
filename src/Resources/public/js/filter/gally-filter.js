@@ -46,6 +46,11 @@ define(function(require) {
                         this.showMore();
                     }
                 }.bind(this));
+                this.selectWidget.getWidget().on('input', function(event) {
+                    if (event.target.value.length && this.custom_data.hasMore) {
+                        this.showMore();
+                    }
+                }.bind(this));
             }
 
             if (this.custom_data.hasMore) {

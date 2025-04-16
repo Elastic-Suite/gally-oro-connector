@@ -13,9 +13,9 @@
         }
     },
     "require": {
-        "php": "~8.2.0 || ~8.3.0",
+        "php": "^8.2.0",
         "gally/gally-php-rest-sdk": "dev-feat-new-sdk",
-        "oro/commerce": "^5.1"
+        "oro/commerce": "~5.1 || ~6.0"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "*",

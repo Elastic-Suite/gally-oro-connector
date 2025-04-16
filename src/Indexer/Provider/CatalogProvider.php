@@ -30,21 +30,14 @@ use Oro\Bundle\WebsiteBundle\Provider\AbstractWebsiteLocalizationProvider;
  */
 class CatalogProvider implements ProviderInterface
 {
-    protected WebsiteRepository $websiteRepository;
-    protected AbstractWebsiteLocalizationProvider $websiteLocalizationProvider;
-
     private array $catalogCache = [];
 
     public function __construct(
-        EntityManagerInterface $entityManager,
-        AbstractWebsiteLocalizationProvider $websiteLocalizationProvider,
+        private EntityManagerInterface $entityManager,
+        private AbstractWebsiteLocalizationProvider $websiteLocalizationProvider,
         private WebsiteCurrencyProvider $currencyProvider,
         private ConfigManager $configManager,
     ) {
-        /** @var WebsiteRepository $websiteRepository */
-        $websiteRepository = $entityManager->getRepository(Website::class);
-        $this->websiteRepository = $websiteRepository;
-        $this->websiteLocalizationProvider = $websiteLocalizationProvider;
     }
 
     /**
@@ -52,7 +45,9 @@ class CatalogProvider implements ProviderInterface
      */
     public function provide(): iterable
     {
-        $websites = $this->websiteRepository->findAll();
+        /** @var WebsiteRepository $websiteRepository */
+        $websiteRepository = $this->entityManager->getRepository(Website::class);
+        $websites = $websiteRepository->findAll();
 
         /** @var Website $website */
         foreach ($websites as $website) {
