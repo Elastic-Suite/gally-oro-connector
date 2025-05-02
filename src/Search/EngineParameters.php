@@ -23,14 +23,36 @@ use Oro\Bundle\SearchBundle\Engine\EngineParameters as BaseEngineParameters;
  */
 class EngineParameters extends BaseEngineParameters
 {
+    private bool $hasBeenReinit = false;
+
     public function __construct(
-        string $dsn,
-        ContextProvider $contextProvider,
-        ConfigManager $configManager,
+        private string $dsn,
+        private ContextProvider $contextProvider,
+        private ConfigManager $configManager,
     ) {
-        $website = $contextProvider->getCurrentWebsite();
-        $isGallyEnabled = $website && $configManager->isGallyEnabled($website->getId());
-        $dsn = $isGallyEnabled ? $configManager->getDsn() : $dsn;
         parent::__construct($dsn);
+    }
+
+    public function reinit(): void
+    {
+        $website = $this->contextProvider->getCurrentWebsite();
+        $isGallyEnabled = $website && $this->configManager->isGallyEnabled($website->getId());
+        $dsn = $isGallyEnabled ? $this->configManager->getDsn() : $this->dsn;
+
+        parent::__construct($dsn);
+    }
+
+    public function getEngineName(): string
+    {
+        // It is not possible to get the current website from constructor. It is not set yet.
+        // So we reinit the DNS on the first call in "real" context.
+        // This means that might "miss" first calls to getEngineName from constructor,
+        // because we cannot guess the current website in this context.
+        if ($this->contextProvider->getCurrentWebsite() && !$this->hasBeenReinit) {
+            $this->reinit();
+            $this->hasBeenReinit = true;
+        }
+
+        return parent::getEngineName();
     }
 }
