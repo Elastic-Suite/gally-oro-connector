@@ -83,11 +83,6 @@ class Indexer extends AbstractIndexer
         );
     }
 
-    public function setFallBackIndexer(AbstractIndexer $fallBackIndexer): void
-    {
-        $this->fallBackIndexer = $fallBackIndexer;
-    }
-
     /**
      * {@inheritdoc}
      */
@@ -114,11 +109,9 @@ class Indexer extends AbstractIndexer
                 continue;
             }
 
-            // Find the good indexer for the current website.
-            $indexer = $this->configManager->isGallyEnabled($websiteId) ? $this : $this->fallBackIndexer;
             $websiteContext = $this->indexDataProvider->collectContextForWebsite($websiteId, $context);
             foreach ($entityClassesToIndex as $entityClass) {
-                $handledItems += $indexer->reindexEntityClass($entityClass, $websiteContext);
+                $handledItems += $this->reindexEntityClass($entityClass, $websiteContext);
             }
             // Check again to ensure Website was not deleted during reindexation otherwise drop index
             if (!$this->ensureWebsiteExists($websiteId)) { // @phpstan-ignore booleanNot.alwaysFalse
@@ -142,26 +135,24 @@ class Indexer extends AbstractIndexer
         $this->isFullContext = $isFullContext;
 
         foreach ($websiteIdsToIndex as $websiteId) {
-            if ($this->configManager->isGallyEnabled($websiteId)) {
-                foreach ($entityClassesToIndex as $entityClass) {
-                    // Use class path in a string because this class might not exist if enterprise bundles are not installed.
-                    if ('Oro\Bundle\WebsiteElasticSearchBundle\Entity\SavedSearch' === $entityClass) {
-                        // Todo managed savedSearch https://doc.oroinc.com/user/storefront/account/saved-search/
-                        continue;
-                    }
-
-                    // Don't create index for entity type without any entity.
-                    $entityCount = iterator_count($this->entityIdentifierRepository->getIds($entityClass));
-                    if (!$entityCount) {
-                        continue;
-                    }
-
-                    $indicesByLocale[$websiteId][$entityClass] = $this->getIndexByLocal(
-                        $websiteId,
-                        $entityClass,
-                        $isFullContext
-                    );
+            foreach ($entityClassesToIndex as $entityClass) {
+                // Use class path in a string because this class might not exist if enterprise bundles are not installed.
+                if ('Oro\Bundle\WebsiteElasticSearchBundle\Entity\SavedSearch' === $entityClass) {
+                    // Todo managed savedSearch https://doc.oroinc.com/user/storefront/account/saved-search/
+                    continue;
                 }
+
+                // Don't create index for entity type without any entity.
+                $entityCount = iterator_count($this->entityIdentifierRepository->getIds($entityClass));
+                if (!$entityCount) {
+                    continue;
+                }
+
+                $indicesByLocale[$websiteId][$entityClass] = $this->getIndexByLocal(
+                    $websiteId,
+                    $entityClass,
+                    $isFullContext
+                );
             }
         }
 
@@ -174,10 +165,6 @@ class Indexer extends AbstractIndexer
         $contextEntityIds = $this->getContextEntityIds($context);
         $entityClass = $event->getEntityClass();
         $websiteId = $context[self::CONTEXT_CURRENT_WEBSITE_ID_KEY];
-
-        if (!$this->configManager->isGallyEnabled($websiteId)) {
-            return;
-        }
 
         /**
          * - Sync full reindexation

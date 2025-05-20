@@ -32,15 +32,13 @@ class Category
         private QueryFactoryInterface $queryFactory,
         private HtmlTagExtension $htmlTagExtension,
         private ConfigManager $configManager,
-        private ContextProvider $contextProvider,
         private GallyConfigManager $gallyConfigManager,
     ) {
     }
 
     public function onProcessAutocompleteData(ProcessAutocompleteDataEvent $event): void
     {
-        $websiteId = $this->contextProvider->getCurrentWebsite()->getId();
-        if (!$this->gallyConfigManager->isGallyEnabled($websiteId)) {
+        if (!$this->gallyConfigManager->isGallyEnabled()) {
             return;
         }
 

@@ -37,8 +37,7 @@ class WebsiteSearchChildDataIndexerListener implements WebsiteSearchProductIndex
 
     public function onWebsiteSearchIndex(IndexEntityEvent $event): void
     {
-        $currentWebsiteId = $event->getContext()[AbstractIndexer::CONTEXT_CURRENT_WEBSITE_ID_KEY];
-        if (!$this->configManager->isGallyEnabled($currentWebsiteId)) {
+        if (!$this->configManager->isGallyEnabled()) {
             return;
         }
 

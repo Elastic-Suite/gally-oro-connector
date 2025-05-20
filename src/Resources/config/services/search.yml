@@ -1,11 +1,4 @@
 services:
-    oro_website_search.engine.parameters:
-        class: Gally\OroPlugin\Search\EngineParameters
-        public: true
-        arguments:
-            - '%oro_website_search.engine_dsn%'
-            - '@Gally\OroPlugin\Service\ContextProvider'
-            - '@Gally\OroPlugin\Config\ConfigManager'
 
     Gally\OroPlugin\Decorator\SavePriceFilterUnit:
         decorates: oro_pricing.filter.frontend_product_price
@@ -109,7 +102,6 @@ services:
             - '@oro_website_search.query_factory'
             - '@oro_ui.twig.html_tag'
             - '@oro_config.manager'
-            - '@Gally\OroPlugin\Service\ContextProvider'
             - '@Gally\OroPlugin\Config\ConfigManager'
         tags:
             - { name: kernel.event_listener, event: Oro\Bundle\ProductBundle\Event\ProcessAutocompleteDataEvent, method: onProcessAutocompleteData }
