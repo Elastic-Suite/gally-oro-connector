@@ -19,7 +19,6 @@ use Gally\OroPlugin\Indexer\Indexer;
 use Oro\Bundle\LocaleBundle\Entity\Localization;
 use Oro\Bundle\ProductBundle\Entity\Product;
 use Oro\Bundle\ProductBundle\EventListener\WebsiteSearchProductIndexerListenerInterface;
-use Oro\Bundle\WebsiteSearchBundle\Engine\AbstractIndexer;
 use Oro\Bundle\WebsiteSearchBundle\Engine\Context\ContextTrait;
 use Oro\Bundle\WebsiteSearchBundle\Event\IndexEntityEvent;
 
@@ -37,8 +36,7 @@ class WebsiteSearchChildDataIndexerListener implements WebsiteSearchProductIndex
 
     public function onWebsiteSearchIndex(IndexEntityEvent $event): void
     {
-        $currentWebsiteId = $event->getContext()[AbstractIndexer::CONTEXT_CURRENT_WEBSITE_ID_KEY];
-        if (!$this->configManager->isGallyEnabled($currentWebsiteId)) {
+        if (!$this->configManager->isGallyEnabled()) {
             return;
         }
 

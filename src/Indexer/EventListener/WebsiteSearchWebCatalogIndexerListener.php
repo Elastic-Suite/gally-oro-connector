@@ -23,7 +23,6 @@ use Oro\Bundle\ProductBundle\EventListener\WebsiteSearchProductIndexerListenerIn
 use Oro\Bundle\WebCatalogBundle\Entity\ContentNode;
 use Oro\Bundle\WebCatalogBundle\Provider\WebCatalogProvider;
 use Oro\Bundle\WebsiteBundle\Entity\Website;
-use Oro\Bundle\WebsiteSearchBundle\Engine\AbstractIndexer;
 use Oro\Bundle\WebsiteSearchBundle\Engine\Context\ContextTrait;
 use Oro\Bundle\WebsiteSearchBundle\Event\IndexEntityEvent;
 use Oro\Bundle\WebsiteSearchBundle\Manager\WebsiteContextManager;
@@ -46,8 +45,7 @@ class WebsiteSearchWebCatalogIndexerListener implements WebsiteSearchProductInde
 
     public function onWebsiteSearchIndex(IndexEntityEvent $event): void
     {
-        $currentWebsiteId = $event->getContext()[AbstractIndexer::CONTEXT_CURRENT_WEBSITE_ID_KEY];
-        if (!$this->configManager->isGallyEnabled($currentWebsiteId)) {
+        if (!$this->configManager->isGallyEnabled()) {
             return;
         }
 

@@ -1,11 +1,4 @@
 services:
-    oro_website_search.indexer:
-        class: 'Oro\Bundle\SearchBundle\Engine\IndexerInterface'
-        arguments:
-            - !tagged_locator { tag: 'oro_website_search.engine.indexer', index_by: 'engine_name' }
-            - '@oro_website_search.engine.parameters'
-        factory: [ 'Gally\OroPlugin\Indexer\IndexerFactory', 'create' ]
-
     Gally\OroPlugin\Decorator\ProductIndexFieldsProvider:
         decorates: oro_product.provider.index_fields
         arguments:
@@ -30,6 +23,7 @@ services:
             - '@oro_website_search.placeholder.registry'
             - '@Gally\OroPlugin\Repository\TranslationRepository'
             - '@oro_locale.settings'
+            - '@Gally\OroPlugin\Config\ConfigManager'
             - '%gally_config.entity_mapping%'
             - '%gally_config.attribute_type_mapping%'
             - '%gally_config.attribute_mapping%'
@@ -46,6 +40,7 @@ services:
             - '@doctrine.orm.entity_manager'
             - '@oro_entity_extend.enum_type_helper'
             - '@Gally\OroPlugin\Indexer\Provider\SourceFieldProvider'
+            - '@Gally\OroPlugin\Config\ConfigManager'
         tags:
             - { name: 'gally.dataprovider', entity: 'sourceFieldOption' }
 
@@ -144,6 +139,7 @@ services:
             - '@.inner'
             
     Gally\OroPlugin\Indexer\Indexer:
+        lazy: true
         arguments:
             - '@oro_entity.doctrine_helper'
             - '@Gally\OroPlugin\Provider\SearchMappingProvider'
@@ -157,12 +153,18 @@ services:
             - '@Gally\OroPlugin\Indexer\Provider\CatalogProvider'
             - '@Gally\OroPlugin\Indexer\Provider\SourceFieldProvider'
             - '@Gally\Sdk\Service\IndexOperation'
-            - '@Gally\OroPlugin\Config\ConfigManager'
             - '@Gally\OroPlugin\Indexer\Registry\IndexRegistry'
             - '@oro_website_search.entity_identifier_repository'
         calls:
             - ['setBatchSize', ['%oro_website_search.indexer_batch_size%']]
         tags:
             - { name: 'oro_website_search.engine.indexer', engine_name: 'gally' }
+
+
+    Gally\OroPlugin\Indexer\Listener\IndexerEventListener:
+        arguments:
+            - '@Gally\OroPlugin\Config\ConfigManager'
+            - '@Gally\OroPlugin\Indexer\Indexer'
+        tags:
             - { name: kernel.event_listener, event: oro_website_search.before_reindex, method: beforeReindex, priority: -255 }
             - { name: kernel.event_listener, event: oro_website_search.after_reindex, method: afterReindex, priority: -255 }

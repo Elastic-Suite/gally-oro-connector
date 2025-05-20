@@ -19,7 +19,6 @@ use Gally\OroPlugin\Config\ConfigManager;
 use Oro\Bundle\InventoryBundle\Entity\InventoryLevel;
 use Oro\Bundle\ProductBundle\EventListener\WebsiteSearchProductIndexerListenerInterface;
 use Oro\Bundle\WarehouseBundle\Provider\EnabledWarehousesProvider;
-use Oro\Bundle\WebsiteSearchBundle\Engine\AbstractIndexer;
 use Oro\Bundle\WebsiteSearchBundle\Engine\Context\ContextTrait;
 use Oro\Bundle\WebsiteSearchBundle\Event\IndexEntityEvent;
 
@@ -39,8 +38,7 @@ class WebsiteSearchInventoryLevelIndexerListener implements WebsiteSearchProduct
 
     public function onWebsiteSearchIndex(IndexEntityEvent $event): void
     {
-        $currentWebsiteId = $event->getContext()[AbstractIndexer::CONTEXT_CURRENT_WEBSITE_ID_KEY];
-        if (!$this->configManager->isGallyEnabled($currentWebsiteId)) {
+        if (!$this->configManager->isGallyEnabled()) {
             return;
         }
 

@@ -49,9 +49,7 @@ services:
     
     Gally\OroPlugin\Config\ConfigManager:
         arguments:
-            - '@doctrine'
-            - '@oro_config.manager'
-            - '@oro_security.encoder.default'
+            - "@=service('oro_website_search.engine.parameters').getEngineName()"
 
     Gally\OroPlugin\Service\ContextProvider:
         arguments:

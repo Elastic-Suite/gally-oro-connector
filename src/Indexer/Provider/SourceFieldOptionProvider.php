@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Gally\OroPlugin\Indexer\Provider;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Gally\OroPlugin\Config\ConfigManager;
 use Gally\Sdk\Entity\Label;
 use Gally\Sdk\Entity\LocalizedCatalog;
 use Gally\Sdk\Entity\SourceField;
@@ -45,6 +46,7 @@ class SourceFieldOptionProvider implements ProviderInterface
         private EntityManagerInterface $entityManager,
         private EnumTypeHelper $enumTypeHelper,
         private SourceFieldProvider $sourceFieldProvider,
+        private ConfigManager $configManager,
     ) {
         $defaultLocale = $this->localeSettings->getLocale();
         foreach ($this->catalogProvider->provide() as $localizedCatalog) {
@@ -59,6 +61,10 @@ class SourceFieldOptionProvider implements ProviderInterface
      */
     public function provide(): iterable
     {
+        if (!$this->configManager->isGallyEnabled()) {
+            return [];
+        }
+
         foreach ($this->mappingProvider->getEntityClasses() as $entityClass) {
             // Use class path in a string because this class might not exist if enterprise bundles are not installed.
             if ('Oro\Bundle\WebsiteElasticSearchBundle\Entity\SavedSearch' === $entityClass) {

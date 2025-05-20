@@ -5,10 +5,10 @@ services:
             - [ setCache, [ '@oro.gally.cache' ] ]
     
     Gally\Sdk\Client\Configuration:
-        factory: ['\Gally\OroPlugin\Factory\ConfigurationFactory', 'create']
+        factory: ['\Gally\OroPlugin\Config\ConfigurationFactory', 'create']
         lazy: true
         arguments:
-            - '@Gally\OroPlugin\Config\ConfigManager'
+            - '%oro_website_search.engine_dsn%'
 
     Gally\Sdk\Service\StructureSynchonizer:
         arguments:

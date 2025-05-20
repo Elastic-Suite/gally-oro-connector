@@ -45,16 +45,17 @@ class CatalogProvider implements ProviderInterface
      */
     public function provide(): iterable
     {
+        if (!$this->configManager->isGallyEnabled()) {
+            return [];
+        }
+
         /** @var WebsiteRepository $websiteRepository */
         $websiteRepository = $this->entityManager->getRepository(Website::class);
         $websites = $websiteRepository->findAll();
-
         /** @var Website $website */
         foreach ($websites as $website) {
-            if ($this->configManager->isGallyEnabled($website->getId())) {
-                foreach ($this->websiteLocalizationProvider->getLocalizations($website) as $localization) {
-                    yield $this->buildLocalizedCatalog($website, $localization);
-                }
+            foreach ($this->websiteLocalizationProvider->getLocalizations($website) as $localization) {
+                yield $this->buildLocalizedCatalog($website, $localization);
             }
         }
     }

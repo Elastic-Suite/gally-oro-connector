@@ -33,10 +33,9 @@ class Attribute
 
     public function onProcessAutocompleteData(ProcessAutocompleteDataEvent $event): void
     {
-        $websiteId = $this->contextProvider->getCurrentWebsite()->getId();
         $attributeData = [];
 
-        if ($this->gallyConfigManager->isGallyEnabled($websiteId)) {
+        if ($this->gallyConfigManager->isGallyEnabled()) {
             $searchQuery = $this->contextProvider->getRequest()->getSearchQuery();
             foreach ($this->contextProvider->getResponse()->getAggregations() as $aggregationData) {
                 foreach ($aggregationData['options'] as $option) {
