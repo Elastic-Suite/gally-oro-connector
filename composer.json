@@ -4,7 +4,7 @@
     "homepage": "https://meetgally.com",
     "type": "oro-platform-plugin",
     "license": "OSL-3.0",
-    "version": "2.0.0",
+    "version": "2.2.0",
     "extra": {
         "oro-plugin-class": "Gally\\OroPlugin\\GallyOroPlugin",
         "author": "Gally Team",
@@ -14,7 +14,7 @@
     },
     "require": {
         "php": "^8.2.0",
-        "gally/gally-php-sdk": "dev-main",
+        "gally/gally-php-sdk": "2.2.0",
         "oro/commerce": "~5.1 || ~6.0"
     },
     "require-dev": {
