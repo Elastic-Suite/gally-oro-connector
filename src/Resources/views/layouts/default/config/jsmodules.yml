@@ -1,9 +1,12 @@
 aliases:
     oro/filter/gally-filter$: bundles/gallyoro/js/filter/gally-filter
+    gallyplugin/js/app/datafilter/gally-multiselect-decorator$: bundles/gallyoro/js/app/datafilter/gally-multiselect-decorator
 
 dynamic-imports:
     orodatagrid:
         - oro/filter/gally-filter
+        - gallyplugin/js/app/datafilter/gally-multiselect-decorator
+
 map:
     '*':
         orofilter/js/filters-manager: 'gallyoro/js/filters-manager'
