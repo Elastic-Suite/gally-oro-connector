@@ -275,7 +275,7 @@ class Indexer extends AbstractIndexer
         $index = $this->indicesByLocale[$websiteId][$entityClass][$locale] ?? null;
 
         if (!$index) {
-            throw new \LogicException(sprintf('Missing index for website %d, class %s and locale %s.', $websiteId, $entityClass, $locale));
+            throw new \LogicException(\sprintf('Missing index for website %d, class %s and locale %s.', $websiteId, $entityClass, $locale));
         }
         $this->indexOperation->executeBulk($index, $bulk);
 

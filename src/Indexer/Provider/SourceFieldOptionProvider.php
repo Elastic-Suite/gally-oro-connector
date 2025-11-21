@@ -18,18 +18,16 @@ use Doctrine\ORM\EntityManagerInterface;
 use Gally\OroPlugin\Config\ConfigManager;
 use Gally\Sdk\Entity\Label;
 use Gally\Sdk\Entity\LocalizedCatalog;
+use Gally\Sdk\Entity\SourceField;
 use Gally\Sdk\Entity\SourceFieldOption;
 use Oro\Bundle\EntityExtendBundle\Entity\EnumOption;
 use Oro\Bundle\EntityExtendBundle\Entity\EnumOptionTranslation;
 use Oro\Bundle\EntityExtendBundle\Form\Util\EnumTypeHelper;
 use Oro\Bundle\LocaleBundle\Model\LocaleSettings;
+use Oro\Bundle\ProductBundle\Entity\Brand;
+use Oro\Bundle\ProductBundle\Entity\Product;
 use Oro\Bundle\SearchBundle\Provider\SearchMappingProvider;
 use Oro\Bundle\WebsiteBundle\Provider\AbstractWebsiteLocalizationProvider;
-
-use Gally\Sdk\Entity\SourceField;
-use Oro\Bundle\EntityExtendBundle\Entity\AbstractEnumValue;
-use Oro\Bundle\EntityExtendBundle\Tools\ExtendHelper;
-use Oro\Bundle\ProductBundle\Entity\Product;
 
 /**
  * Gally Catalog data provider.
@@ -67,6 +65,10 @@ class SourceFieldOptionProvider implements ProviderInterface
             return [];
         }
 
+        foreach ($this->getBrands() as $brandOption) {
+            yield $brandOption;
+        }
+
         foreach ($this->mappingProvider->getEntityClasses() as $entityClass) {
             // Use class path in a string because this class might not exist if enterprise bundles are not installed.
             if ('Oro\Bundle\WebsiteElasticSearchBundle\Entity\SavedSearch' === $entityClass) {
@@ -79,12 +81,16 @@ class SourceFieldOptionProvider implements ProviderInterface
             $enumValueRepo = $this->entityManager->getRepository(EnumOption::class);
 
             foreach ($entityConfig['fields'] as $fieldData) {
+                $fieldName = $this->sourceFieldProvider->cleanFieldName($fieldData['name']);
+                if ('brand' === $fieldName) {
+                    continue;
+                }
+
                 if (!str_ends_with($fieldData['name'], '_enum.ENUM_ID')) {
                     // Get options only for select attributes.
                     continue;
                 }
 
-                $fieldName = $this->sourceFieldProvider->cleanFieldName($fieldData['name']);
                 $sourceField = new SourceField($metadata, $fieldName, '', '', []);
                 $enumCode = $this->enumTypeHelper->getEnumCode(Product::class, $fieldName);
                 $labels = $this->getLabels($enumCode);
@@ -111,7 +117,7 @@ class SourceFieldOptionProvider implements ProviderInterface
     private function getLabels(string $enumCode): array
     {
         $translationRepo = $this->entityManager->getRepository(EnumOptionTranslation::class);
-        
+
         $qb = $translationRepo->createQueryBuilder('t')
             ->where('t.field = :field')
             ->andWhere('t.foreignKey LIKE :enumCode')
@@ -140,5 +146,44 @@ class SourceFieldOptionProvider implements ProviderInterface
         $this->entityManager->clear();
 
         return $labels;
+    }
+
+    /**
+     * @return iterable<SourceFieldOption>
+     */
+    private function getBrands(): iterable
+    {
+        $metadata = $this->sourceFieldProvider->getMetadataFromEntityClass(Product::class);
+        $sourceField = new SourceField($metadata, 'brand', '', '', []);
+        $brandRepository = $this->entityManager->getRepository(Brand::class);
+        $brands = $brandRepository->findAll();
+
+        /** @var Brand $brand */
+        foreach ($brands as $brand) {
+            $labels = [];
+            foreach ($brand->getNames() as $localizedValue) {
+                if (null === $localizedValue->getLocalization() || null === $localizedValue->getString()) {
+                    continue;
+                }
+
+                $localeCode = $localizedValue->getLocalization()->getFormattingCode();
+                $fallbackLocaleCode = substr($localeCode, 0, 2);
+                $localizedCatalogs = $this->localizedCatalogsByLocale[$localeCode]
+                    ?? $this->localizedCatalogsByLocale[$fallbackLocaleCode]
+                    ?? [];
+
+                foreach ($localizedCatalogs as $localizedCatalog) {
+                    $labels[] = new Label($localizedCatalog, $localizedValue->getString());
+                }
+            }
+
+            yield new SourceFieldOption(
+                $sourceField,
+                (string) $brand->getId(),
+                0,
+                $brand->getDefaultTitle(),
+                $labels
+            );
+        }
     }
 }

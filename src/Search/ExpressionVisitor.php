@@ -80,7 +80,7 @@ class ExpressionVisitor extends BaseExpressionVisitor
     public function walkCompositeExpression(
         CompositeExpression $expr,
         bool $isStitchedQuery = false,
-        bool $isMainQuery = true
+        bool $isMainQuery = true,
     ): array {
         $type = self::GALLY_TYPE_AND;
         if (CompositeExpression::TYPE_AND !== $expr->getType()) {
