@@ -155,7 +155,7 @@ class GallyDataGridExtension extends AbstractExtension
                             'data_name' => $attribute->getCode(),
                             'type' => match ($attribute->getType()) {
                                 SourceField::TYPE_TEXT => 'string',
-                                default => null
+                                default => null,
                             },
                         ]
                     )

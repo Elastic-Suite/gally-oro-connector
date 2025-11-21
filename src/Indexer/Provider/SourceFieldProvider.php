@@ -109,7 +109,7 @@ class SourceFieldProvider implements ProviderInterface
                     ?? $fieldData['name'];
 
                 if (!\array_key_exists($fieldData['type'], $this->typeMapping)) {
-                    throw new \LogicException(sprintf('Type %s not managed for field %s of entity %s.', $fieldData['type'], $fieldName, $entityClass));
+                    throw new \LogicException(\sprintf('Type %s not managed for field %s of entity %s.', $fieldData['type'], $fieldName, $entityClass));
                 }
 
                 yield new SourceField(

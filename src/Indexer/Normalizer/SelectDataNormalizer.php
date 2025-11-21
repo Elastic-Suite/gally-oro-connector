@@ -16,12 +16,9 @@ namespace Gally\OroPlugin\Indexer\Normalizer;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Gally\OroPlugin\Convertor\LocalizationConvertor;
-use Oro\Bundle\EntityBundle\ORM\DoctrineHelper;
 use Oro\Bundle\EntityExtendBundle\Entity\EnumOption;
 use Oro\Bundle\EntityExtendBundle\Entity\EnumOptionTranslation;
-use Oro\Bundle\EntityExtendBundle\Entity\EnumValueTranslation;
 use Oro\Bundle\EntityExtendBundle\Form\Util\EnumTypeHelper;
-use Oro\Bundle\EntityExtendBundle\Tools\ExtendHelper;
 use Oro\Bundle\LocaleBundle\Entity\Localization;
 use Oro\Bundle\WebsiteBundle\Entity\Website;
 
@@ -30,7 +27,6 @@ class SelectDataNormalizer extends AbstractNormalizer
     private array $translatedOptionsByField;
 
     public function __construct(
-        private DoctrineHelper $doctrineHelper,
         private EnumTypeHelper $enumTypeHelper,
         private EntityManagerInterface $entityManager,
     ) {
@@ -83,7 +79,7 @@ class SelectDataNormalizer extends AbstractNormalizer
                 ->setParameter('enumCode', $enumCode . '.%')
                 ->setParameter('objectClass', EnumOption::class)
                 ->setParameter('localeCode', LocalizationConvertor::getLocaleFormattingCode($localization));
-            
+
             foreach ($qb->getQuery()->getResult() as $translation) {
                 $code = str_replace($enumCode . '.', '', $translation->getForeignKey());
                 $this->translatedOptionsByField[$fieldName][$code] = $translation->getContent();

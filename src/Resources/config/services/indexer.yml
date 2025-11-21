@@ -90,7 +90,6 @@ services:
 
     Gally\OroPlugin\Indexer\Normalizer\SelectDataNormalizer:
         arguments:
-            - '@oro_entity.doctrine_helper'
             - '@oro_entity_extend.enum_type_helper'
             - '@doctrine.orm.entity_manager'
         tags:

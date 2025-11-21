@@ -22,7 +22,7 @@ class BeforeSaveIndexDataEvent extends Event
 
     public function __construct(
         private string $class,
-        private array $data
+        private array $data,
     ) {
     }
 

@@ -59,7 +59,7 @@ class BooleanDataNormalizer extends AbstractNormalizer
         string $entityClass,
         int|string $entityId,
         array &$fieldsValues,
-        array &$preparedEntityData
+        array &$preparedEntityData,
     ): void {
         foreach ($this->booleanAttributes as $attribute) {
             foreach ($this->toArray($fieldsValues[$attribute] ?? []) as $value) {

@@ -86,7 +86,7 @@ class WebsiteSearchReindexProcessor extends BaseWebsiteSearchReindexProcessor
                     if ($this->hasMoreThanOneChildMessages($messageBody)) {
                         return $this->jobRunner->runUnique(
                             $message->getMessageId(),
-                            sprintf('gally:reindex:job-parent:%s', $message->getMessageId()),
+                            \sprintf('gally:reindex:job-parent:%s', $message->getMessageId()),
                             function (JobRunner $jobRunner, Job $job) use (
                                 $messageBody,
                             ) {
@@ -97,7 +97,7 @@ class WebsiteSearchReindexProcessor extends BaseWebsiteSearchReindexProcessor
                                 foreach ($childMessages as $childMessageBody) {
                                     ++$count;
                                     $jobRunner->createDelayed(
-                                        sprintf('gally:reindex:job-child:%s', $count),
+                                        \sprintf('gally:reindex:job-child:%s', $count),
                                         function (JobRunner $jobRunner, Job $child) use (
                                             $childMessageBody,
                                         ): void {
