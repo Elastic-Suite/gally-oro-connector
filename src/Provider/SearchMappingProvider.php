@@ -32,7 +32,7 @@ class SearchMappingProvider extends BaseSearchMappingProvider
         private ContextProvider $contextProvider,
         string $cacheKeyPrefix,
         string $searchEngineName,
-        string $eventName
+        string $eventName,
     ) {
         parent::__construct($dispatcher, $mappingConfigProvider, $cache, $cacheKeyPrefix, $searchEngineName, $eventName);
     }

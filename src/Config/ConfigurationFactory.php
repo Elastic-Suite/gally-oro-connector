@@ -32,7 +32,7 @@ class ConfigurationFactory
         }
 
         return new Configuration(
-            sprintf(
+            \sprintf(
                 '%s://%s/%s',
                 443 === $websiteSearchDsn['port'] ? 'https' : 'http',
                 $websiteSearchDsn['host'],

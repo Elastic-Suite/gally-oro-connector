@@ -8,3 +8,4 @@ parameters:
     excludePaths:
         # Test dependencies
         - 'tests/Application/**/**.php'
+        - 'src/Decorator/AddIndexNameInContextTrait.php'

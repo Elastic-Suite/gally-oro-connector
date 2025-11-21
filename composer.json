@@ -27,6 +27,12 @@
             "Gally\\OroPlugin\\": "src/"
         }
     },
+    "repositories": {
+        "oro": {
+            "type": "composer",
+            "url": "https://packagist.oroinc.com"
+        }
+    },
     "config": {
         "allow-plugins": {
             "symfony/runtime": false,

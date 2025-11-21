@@ -61,7 +61,7 @@ class IndexDataProvider extends BaseIndexDataProvider
         $entityClass,
         array $restrictedEntities,
         array $context,
-        array $entityConfig
+        array $entityConfig,
     ): array {
         $entityAlias = $this->entityAliasResolver->getAlias($entityClass);
         $this->contextProvider->setIsGallyContext(true);
@@ -70,7 +70,7 @@ class IndexDataProvider extends BaseIndexDataProvider
         $this->eventDispatcher->dispatch($indexEntityEvent, Event\IndexEntityEvent::NAME);
         $this->eventDispatcher->dispatch(
             $indexEntityEvent,
-            sprintf('%s.%s', Event\IndexEntityEvent::NAME, $entityAlias)
+            \sprintf('%s.%s', Event\IndexEntityEvent::NAME, $entityAlias)
         );
 
         $data = $this->prepareIndexData($entityClass, $indexEntityEvent->getEntitiesData(), $entityConfig, $context);
@@ -88,7 +88,7 @@ class IndexDataProvider extends BaseIndexDataProvider
         string $entityClass,
         array $indexData,
         array $entityConfig,
-        array $context
+        array $context,
     ): array {
         $preparedIndexData = [];
 
@@ -146,7 +146,7 @@ class IndexDataProvider extends BaseIndexDataProvider
                 }
             }
 
-            $preparedIndexData[$entityId] = $preparedIndexData[$entityId] ?? [];
+            $preparedIndexData[$entityId] = $preparedIndexData[$entityId];
 
             $preparedIndexData[$entityId]['id'] = (string) $entityId;
             if (\array_key_exists('image_product_medium', $preparedIndexData[$entityId])) {
