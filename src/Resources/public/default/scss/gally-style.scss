@@ -4,9 +4,11 @@
 
 .filter-item .ui-multiselect-menu,
 .filter-default.dropdown-menu {
-    .datagrid-manager__footer {
-      display: flex;
-      justify-content: space-between;
+    display: flex;
+    flex-direction: column;
+    .view-more {
+        padding-top: 10px;
+        order: 2;
     }
 }
 
